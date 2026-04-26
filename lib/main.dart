@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'src/baseball_models.dart';
 import 'src/baseball_simulator.dart';
+import 'src/production_game_engine.dart';
 
 void main() {
   runApp(const BaseballGameApp());
@@ -112,6 +113,7 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
   static const _seasonLength = 10;
 
   final BaseballSimulator _simulator = BaseballSimulator();
+  final ProductionGameEngine _productionEngine = ProductionGameEngine();
   GamePlan _gamePlan = const GamePlan(
     battingApproach: BattingApproach.balanced,
     bullpenApproach: BullpenApproach.normal,
@@ -122,6 +124,7 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
   DefensePlan _defensePlan = DefensePlan.standard;
   ClutchPlan _clutchPlan = ClutchPlan.trustStarter;
   MatchResult? _result;
+  ProductionGameResult? _productionResult;
   int _game = 0;
   int _wins = 0;
   int _losses = 0;
@@ -142,6 +145,31 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
   }
 
   bool get _seasonFinished => _game >= _seasonLength;
+
+  ProductionGamePlan get _productionGamePlan => ProductionGamePlan(
+    battingApproach: _gamePlan.battingApproach,
+    bullpenApproach: _gamePlan.bullpenApproach,
+    lineupIntent: switch (_lineupPlan) {
+      LineupPlan.onBaseTop => LineupIntent.onBaseFirst,
+      LineupPlan.powerCore => LineupIntent.powerFirst,
+      LineupPlan.youthStart => LineupIntent.developProspects,
+    },
+    runningIntent: switch (_runningPlan) {
+      RunningPlan.stationToStation => RunningIntent.conservative,
+      RunningPlan.stealAndRun => RunningIntent.aggressive,
+      RunningPlan.buntPressure => RunningIntent.smallBall,
+    },
+    defensiveAlignment: switch (_defensePlan) {
+      DefensePlan.standard => DefensiveAlignment.standard,
+      DefensePlan.noDoubles => DefensiveAlignment.noDoubles,
+      DefensePlan.infieldIn => DefensiveAlignment.infieldIn,
+    },
+    clutchIntent: switch (_clutchPlan) {
+      ClutchPlan.trustStarter => ClutchIntent.saveBullpen,
+      ClutchPlan.pinchHitEarly => ClutchIntent.pinchHit,
+      ClutchPlan.closerForFourOuts => ClutchIntent.fourOutCloser,
+    },
+  );
 
   String get _recommendedPlan {
     if (_bullpenFatigue >= 45) {
@@ -283,6 +311,11 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
       awayTeam: DemoTeams.tokyo,
       gamePlan: _gamePlan,
     );
+    final productionResult = _productionEngine.simulate(
+      homeTeam: DemoTeams.dragons,
+      awayTeam: DemoTeams.tokyo,
+      plan: _productionGamePlan,
+    );
     final won = result.homeWon;
     final closeGame = (result.homeRuns - result.awayRuns).abs() <= 1;
     final rewards = <String>[];
@@ -325,6 +358,7 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
 
     setState(() {
       _result = result;
+      _productionResult = productionResult;
       _game++;
       if (won) {
         _wins++;
@@ -345,6 +379,7 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
   void _resetSeason() {
     setState(() {
       _result = null;
+      _productionResult = null;
       _game = 0;
       _wins = 0;
       _losses = 0;
@@ -393,6 +428,8 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
             factors: _decisionFactors,
             selectedPlanEffects: _selectedPlanEffects,
           ),
+          const SizedBox(height: 16),
+          _ProductionEngineCard(result: _productionResult),
           const SizedBox(height: 16),
           _PlanCard(
             gamePlan: _gamePlan,
@@ -646,6 +683,59 @@ class _DecisionSupportCard extends StatelessWidget {
             Text('選択中の方針による予測効果', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             for (final effect in selectedPlanEffects) _BulletText(effect),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductionEngineCard extends StatelessWidget {
+  const _ProductionEngineCard({required this.result});
+
+  final ProductionGameResult? result;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final leverageEvents = result?.leverageEvents.take(4).toList() ?? const [];
+    final highlights = result?.highlights.take(4).toList() ?? const [];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('本番エンジン分析', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              result == null
+                  ? '次の試合へ進むと、打席単位の裏シミュレーションで高レバレッジ場面を解析します。'
+                  : '${result!.scoreLine} / 打席イベント ${result!.events.length}件 / 高レバレッジ ${result!.leverageEvents.length}件',
+            ),
+            if (result != null) ...[
+              const Divider(height: 28),
+              Text('高レバレッジ場面', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              if (leverageEvents.isEmpty)
+                const _BulletText('大きな勝負所は少なく、安定した試合展開でした。')
+              else
+                for (final event in leverageEvents)
+                  _BulletText(
+                    '${event.inning}回${event.isBottom ? '裏' : '表'} ${event.outsBefore}死 ${event.basesBefore.label}: '
+                    '${event.batterName} ${event.outcome.label} / ${event.explanation}',
+                  ),
+              const Divider(height: 28),
+              Text('エンジンハイライト', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              for (final highlight in highlights) _BulletText(highlight),
+              const Divider(height: 28),
+              Text('次戦への本番エンジン提案', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              for (final recommendation in result!.recommendations)
+                _BulletText(recommendation),
+            ],
           ],
         ),
       ),
