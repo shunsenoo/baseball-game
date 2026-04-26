@@ -23,24 +23,22 @@ void main() {
     expect(result.scoreLine, contains('名古屋D'));
   });
 
-  testWidgets('prototype can run a simulated Dragons game', (tester) async {
+  testWidgets('prototype advances the Dragons season loop', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
     await tester.pumpWidget(const BaseballGameApp());
 
     expect(find.text('プロ野球フロントライン 技術検証版'), findsOneWidget);
-    expect(find.text('中日ドラゴンズ重点プロトタイプ'), findsOneWidget);
+    expect(find.textContaining('10試合チャレンジ'), findsWidgets);
+    await tester.ensureVisible(find.text('球団状態'));
+    expect(find.text('球団状態'), findsOneWidget);
 
-    final simulateButton = find.widgetWithText(FilledButton, '1試合をシミュレーション');
-    await tester.dragUntilVisible(
-      simulateButton,
-      find.byType(ListView),
-      const Offset(0, -120),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(simulateButton);
-    await tester.pump();
-
-    await tester.ensureVisible(find.text('試合後レポート'));
-    expect(find.textContaining('試合後レポート'), findsOneWidget);
+    final simulateButton = find.widgetWithText(FilledButton, '次の試合へ進む');
+    expect(simulateButton, findsOneWidget);
+    expect(find.text('ミッション: 3点以上取って得点力不足を払拭'), findsOneWidget);
+    expect(find.text('前回の報酬/結果'), findsOneWidget);
+    expect(find.textContaining('育成ポイント'), findsWidgets);
     expect(find.byIcon(Icons.sports_baseball), findsWidgets);
   });
 }
