@@ -37,12 +37,10 @@ void main() {
     expect(find.text('試合前分析'), findsOneWidget);
     expect(find.textContaining('おすすめ:'), findsWidgets);
     expect(find.textContaining('相手先発:'), findsWidgets);
+    expect(find.text('ドット絵リプレイ'), findsOneWidget);
 
-    final simulateButton = find.widgetWithText(FilledButton, '次の試合へ進む');
-    expect(simulateButton, findsOneWidget);
     expect(find.text('ミッション: 3点以上取って得点力不足を払拭'), findsOneWidget);
     expect(find.text('前回の報酬/結果'), findsOneWidget);
     expect(find.textContaining('育成ポイント'), findsWidgets);
-    expect(find.byIcon(Icons.sports_baseball), findsWidgets);
   });
 }

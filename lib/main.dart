@@ -33,6 +33,23 @@ class BaseballGameApp extends StatelessWidget {
           seedColor: dragonsBlue,
           brightness: Brightness.light,
         ),
+        scaffoldBackgroundColor: const Color(0xFFE7E1C4),
+        fontFamily: 'monospace',
+        cardTheme: CardThemeData(
+          color: const Color(0xFFFFF7D6),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+            side: const BorderSide(color: Color(0xFF18213A), width: 3),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            shape: const RoundedRectangleBorder(),
+            backgroundColor: dragonsBlue,
+            foregroundColor: Colors.white,
+          ),
+        ),
         useMaterial3: true,
       ),
       home: const PrototypeHomePage(),
@@ -265,6 +282,8 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
           const SizedBox(height: 16),
           _MissionCard(mission: _mission, rewards: _lastRewards),
           const SizedBox(height: 16),
+          _PixelGameAnimationCard(result: _result),
+          const SizedBox(height: 16),
           _DecisionSupportCard(
             recommendedPlan: _recommendedPlan,
             factors: _decisionFactors,
@@ -285,6 +304,8 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
           _TeamFocusCard(team: DemoTeams.dragons),
           const SizedBox(height: 16),
           if (_result != null) ...[
+            _PixelGameAnimationCard(result: _result!),
+            const SizedBox(height: 16),
             _ScoreboardCard(result: _result!),
             const SizedBox(height: 16),
             _ReportCard(result: _result!),
@@ -691,6 +712,207 @@ class _ScoreboardCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _PixelGameAnimationCard extends StatelessWidget {
+  const _PixelGameAnimationCard({required this.result});
+
+  final MatchResult? result;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasResult = result != null;
+    final animationKey = hasResult
+        ? '${result!.homeRuns}-${result!.awayRuns}-${result!.innings.hashCode}'
+        : 'pregame';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('ドット絵リプレイ', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              !hasResult
+                  ? '試合を進めると、投球、打球、走者進塁をブロック調で再生します。'
+                  : result!.homeWon
+                  ? '打球が外野へ抜け、ホームが湧く演出です。'
+                  : '守備側に抑え込まれた展開を表示します。',
+            ),
+            const SizedBox(height: 12),
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: TweenAnimationBuilder<double>(
+                key: ValueKey(animationKey),
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 1500),
+                curve: Curves.linear,
+                builder: (context, progress, _) {
+                  final steppedProgress = (progress * 12).floor() / 12;
+                  return CustomPaint(
+                    painter: _PixelFieldPainter(
+                      progress: steppedProgress.clamp(0, 1).toDouble(),
+                      homeWon: result?.homeWon ?? true,
+                      homeRuns: result?.homeRuns ?? 0,
+                    ),
+                    child: const SizedBox.expand(),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PixelFieldPainter extends CustomPainter {
+  const _PixelFieldPainter({
+    required this.progress,
+    required this.homeWon,
+    required this.homeRuns,
+  });
+
+  final double progress;
+  final bool homeWon;
+  final int homeRuns;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final pixel = size.shortestSide / 34;
+    final borderPaint = Paint()..color = const Color(0xFF18213A);
+    final grassPaint = Paint()..color = const Color(0xFF4F8F3A);
+    final dirtPaint = Paint()..color = const Color(0xFFC68D4C);
+    final linePaint = Paint()
+      ..color = const Color(0xFFFFF7D6)
+      ..strokeWidth = pixel * 0.45
+      ..style = PaintingStyle.stroke;
+    final basePaint = Paint()..color = const Color(0xFFFFF7D6);
+    final playerPaint = Paint()..color = const Color(0xFF003B7A);
+    final rivalPaint = Paint()..color = const Color(0xFFB3261E);
+    final ballPaint = Paint()..color = const Color(0xFFFFFFFF);
+    final shadowPaint = Paint()..color = const Color(0x55000000);
+
+    canvas.drawRect(Offset.zero & size, borderPaint);
+    final field = Rect.fromLTWH(
+      pixel,
+      pixel,
+      size.width - pixel * 2,
+      size.height - pixel * 2,
+    );
+    canvas.drawRect(field, grassPaint);
+
+    final home = Offset(size.width * 0.50, size.height * 0.78);
+    final first = Offset(size.width * 0.68, size.height * 0.60);
+    final second = Offset(size.width * 0.50, size.height * 0.43);
+    final third = Offset(size.width * 0.32, size.height * 0.60);
+    final mound = Offset(size.width * 0.50, size.height * 0.62);
+    final outfield = homeWon
+        ? Offset(size.width * 0.73, size.height * 0.25)
+        : Offset(size.width * 0.43, size.height * 0.30);
+
+    final infield = Path()
+      ..moveTo(home.dx, home.dy)
+      ..lineTo(first.dx, first.dy)
+      ..lineTo(second.dx, second.dy)
+      ..lineTo(third.dx, third.dy)
+      ..close();
+    canvas.drawPath(infield, dirtPaint);
+    canvas.drawPath(infield, linePaint);
+    canvas.drawLine(
+      home,
+      Offset(size.width * 0.18, size.height * 0.23),
+      linePaint,
+    );
+    canvas.drawLine(
+      home,
+      Offset(size.width * 0.82, size.height * 0.23),
+      linePaint,
+    );
+
+    for (final base in [home, first, second, third]) {
+      canvas.drawRect(
+        Rect.fromCenter(center: base, width: pixel * 2, height: pixel * 2),
+        basePaint,
+      );
+    }
+
+    void drawPlayer(Offset position, Paint paint) {
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: position + Offset(pixel * 0.35, pixel * 0.35),
+          width: pixel * 2.2,
+          height: pixel * 2.2,
+        ),
+        shadowPaint,
+      );
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: position,
+          width: pixel * 2.2,
+          height: pixel * 2.2,
+        ),
+        paint,
+      );
+    }
+
+    drawPlayer(mound, rivalPaint);
+    drawPlayer(Offset(size.width * 0.25, size.height * 0.34), rivalPaint);
+    drawPlayer(Offset(size.width * 0.75, size.height * 0.34), rivalPaint);
+    drawPlayer(home + Offset(-pixel * 3.2, pixel * 1.4), playerPaint);
+
+    final runnerPath = homeWon
+        ? [home, first, second, third, home]
+        : [home, first];
+    final runner = _pointOnPath(runnerPath, progress);
+    drawPlayer(runner, playerPaint);
+
+    final ballPath = progress < 0.35
+        ? Offset.lerp(mound, home, progress / 0.35)!
+        : Offset.lerp(home, outfield, ((progress - 0.35) / 0.65).clamp(0, 1))!;
+    canvas.drawRect(
+      Rect.fromCenter(
+        center: ballPath,
+        width: pixel * (homeRuns >= 3 ? 1.7 : 1.3),
+        height: pixel * (homeRuns >= 3 ? 1.7 : 1.3),
+      ),
+      ballPaint,
+    );
+
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: homeWon ? 'HIT!' : 'OUT?',
+        style: TextStyle(
+          color: const Color(0xFFFFF7D6),
+          fontFamily: 'monospace',
+          fontSize: pixel * 2.2,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(canvas, Offset(pixel * 2, pixel * 2));
+  }
+
+  Offset _pointOnPath(List<Offset> points, double progress) {
+    if (points.length == 1) {
+      return points.first;
+    }
+    final scaled = progress.clamp(0, 1).toDouble() * (points.length - 1);
+    final index = scaled.floor().clamp(0, points.length - 2);
+    final local = (scaled - index).toDouble();
+    return Offset.lerp(points[index], points[index + 1], local)!;
+  }
+
+  @override
+  bool shouldRepaint(covariant _PixelFieldPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.homeWon != homeWon ||
+        oldDelegate.homeRuns != homeRuns;
   }
 }
 
