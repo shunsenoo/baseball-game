@@ -15,6 +15,9 @@
         --win: #0b7a3b;
         --loss: #b3261e;
         --gold: #a86b00;
+        --grass: #1f8f54;
+        --dirt: #c88945;
+        --pixel-shadow: #0b2240;
       }
 
       * {
@@ -23,9 +26,15 @@
 
       body {
         margin: 0;
-        background: linear-gradient(180deg, #f4f8ff 0%, #eef3f9 100%);
+        background:
+          linear-gradient(45deg, rgba(0, 59, 122, 0.08) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(0, 59, 122, 0.08) 25%, transparent 25%),
+          #eaf3ff;
+        background-size: 18px 18px;
         color: var(--ink);
         font-family:
+          "MS Gothic",
+          "Yu Gothic UI",
           system-ui,
           -apple-system,
           BlinkMacSystemFont,
@@ -42,10 +51,11 @@
       header {
         margin-bottom: 16px;
         padding: 24px;
-        border-radius: 24px;
-        background: linear-gradient(135deg, var(--dragons-blue), #2f78c8);
+        border: 4px solid var(--pixel-shadow);
+        border-radius: 0;
+        background: var(--dragons-blue);
         color: white;
-        box-shadow: 0 20px 50px rgba(0, 59, 122, 0.22);
+        box-shadow: 8px 8px 0 var(--pixel-shadow);
       }
 
       h1,
@@ -84,10 +94,10 @@
       .card {
         grid-column: span 12;
         padding: 20px;
-        border: 1px solid var(--line);
-        border-radius: 20px;
+        border: 4px solid var(--pixel-shadow);
+        border-radius: 0;
         background: var(--card);
-        box-shadow: 0 10px 30px rgba(23, 32, 51, 0.07);
+        box-shadow: 6px 6px 0 rgba(11, 34, 64, 0.28);
       }
 
       @media (min-width: 860px) {
@@ -118,8 +128,8 @@
 
       .metric {
         padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: 16px;
+        border: 3px solid var(--line);
+        border-radius: 0;
         background: #f8fbff;
       }
 
@@ -149,7 +159,8 @@
         width: fit-content;
         min-height: 32px;
         padding: 6px 12px;
-        border-radius: 999px;
+        border: 2px solid var(--dragons-blue);
+        border-radius: 0;
         background: var(--dragons-light);
         color: var(--dragons-blue);
         font-weight: 700;
@@ -171,18 +182,19 @@
 
       select {
         width: 100%;
-        border: 1px solid var(--line);
+        border: 3px solid var(--pixel-shadow);
         padding: 8px 12px;
         background: white;
       }
 
       button {
         width: 100%;
-        border: 0;
+        border: 4px solid var(--pixel-shadow);
         background: var(--dragons-blue);
         color: white;
         cursor: pointer;
         font-weight: 800;
+        box-shadow: 4px 4px 0 var(--pixel-shadow);
       }
 
       button.secondary {
@@ -190,7 +202,8 @@
       }
 
       button:active {
-        transform: translateY(1px);
+        transform: translate(3px, 3px);
+        box-shadow: 1px 1px 0 var(--pixel-shadow);
       }
 
       .button-row {
@@ -253,6 +266,102 @@
         color: var(--muted);
         line-height: 1.7;
       }
+
+      .pixel-field {
+        position: relative;
+        min-height: 280px;
+        overflow: hidden;
+        border: 4px solid var(--pixel-shadow);
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.08) 50%, transparent 50%),
+          var(--grass);
+        background-size: 18px 18px;
+      }
+
+      .diamond {
+        position: absolute;
+        left: 50%;
+        top: 54%;
+        width: 150px;
+        height: 150px;
+        background: var(--dirt);
+        border: 4px solid #f7d28a;
+        transform: translate(-50%, -50%) rotate(45deg);
+      }
+
+      .base,
+      .player,
+      .ball {
+        position: absolute;
+        image-rendering: pixelated;
+      }
+
+      .base {
+        width: 16px;
+        height: 16px;
+        background: #fff8d6;
+        border: 2px solid var(--pixel-shadow);
+        transform: rotate(45deg);
+      }
+
+      .home { left: calc(50% - 8px); top: calc(54% + 92px); }
+      .first { left: calc(50% + 82px); top: calc(54% + 4px); }
+      .second { left: calc(50% - 8px); top: calc(54% - 84px); }
+      .third { left: calc(50% - 98px); top: calc(54% + 4px); }
+
+      .player {
+        width: 24px;
+        height: 32px;
+        background: var(--dragons-blue);
+        border: 3px solid var(--pixel-shadow);
+        box-shadow: inset 0 8px 0 #ffffff;
+      }
+
+      .pitcher { left: calc(50% - 12px); top: calc(54% + 22px); }
+      .batter { left: calc(50% + 18px); top: calc(54% + 94px); background: #d22f27; }
+      .runner { left: calc(50% + 78px); top: calc(54% + 38px); background: #f7d28a; }
+
+      .ball {
+        width: 12px;
+        height: 12px;
+        background: white;
+        border: 2px solid #c21f30;
+        animation: pitch-hit 2.4s steps(8, end) infinite;
+      }
+
+      .bat {
+        position: absolute;
+        left: calc(50% + 42px);
+        top: calc(54% + 94px);
+        width: 8px;
+        height: 42px;
+        background: #6f4b2a;
+        transform-origin: bottom center;
+        animation: swing 2.4s steps(4, end) infinite;
+      }
+
+      .play-caption {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 8px 10px;
+        border: 3px solid var(--pixel-shadow);
+        background: rgba(255, 255, 255, 0.92);
+        font-weight: 800;
+      }
+
+      @keyframes pitch-hit {
+        0% { left: calc(50% - 4px); top: calc(54% + 34px); }
+        35% { left: calc(50% + 28px); top: calc(54% + 92px); }
+        55% { left: calc(50% + 70px); top: calc(54% - 34px); }
+        100% { left: calc(50% + 130px); top: calc(54% - 92px); }
+      }
+
+      @keyframes swing {
+        0%, 30% { transform: rotate(-35deg); }
+        45%, 60% { transform: rotate(55deg); }
+        100% { transform: rotate(-35deg); }
+      }
     </style>
   </head>
   <body>
@@ -285,6 +394,15 @@
         </div>
 
         <div class="card span-7">
+          <h2>試合前分析</h2>
+          <p><strong id="recommendedPlan">おすすめ: 通常運用 + バランス重視</strong></p>
+          <h3>判断材料</h3>
+          <ul id="decisionFactors" class="report-list"></ul>
+          <h3>選択中の方針効果</h3>
+          <ul id="selectedEffects" class="report-list"></ul>
+        </div>
+
+        <div class="card span-7">
           <h2>今日の采配方針</h2>
           <label>
             攻撃方針
@@ -309,7 +427,18 @@
         </div>
 
         <div class="card span-7">
-          <h2>スコアボード</h2>
+          <h2>ドット絵 試合リプレイ / スコアボード</h2>
+          <div class="pixel-field" aria-label="試合リプレイ">
+            <div class="mound"></div>
+            <div class="base b1"></div>
+            <div class="base b2"></div>
+            <div class="base b3"></div>
+            <div class="player pitcher"></div>
+            <div class="player batter"></div>
+            <div class="player runner"></div>
+            <div class="ball"></div>
+            <div id="replayText" class="replay-text">PLAY BALL</div>
+          </div>
           <div class="table-wrap">
             <table id="scoreboard" aria-label="スコアボード"></table>
           </div>
@@ -402,6 +531,39 @@
 
       function pickMission() {
         state.currentMission = missions[state.game % missions.length];
+      }
+
+      function decisionSupport() {
+        const battingPlan = document.getElementById("batting").value;
+        const bullpenPlan = document.getElementById("bullpen").value;
+        const recommendation =
+          state.bullpenFatigue >= 45
+            ? "おすすめ: リリーフ温存 + つなぐ野球"
+            : state.currentMission?.id === "power"
+              ? "おすすめ: 長打狙い"
+              : state.currentMission?.id === "close"
+                ? "おすすめ: 早めの継投 + つなぐ野球"
+                : "おすすめ: 通常運用 + バランス重視";
+        const selectedBatting = {
+          balanced: "攻撃: 出塁と長打のバランス型。大崩れしにくい。",
+          smallBall: "攻撃: 接戦向き。2点前後を取りに行きやすい。",
+          power: "攻撃: 3点以上ミッション向き。成功時の支持率上昇が大きい。",
+        }[battingPlan];
+        const selectedBullpen = {
+          normal: "継投: 消耗と勝率の中間。迷った時の基準方針。",
+          quickHook: "継投: 接戦勝利向き。終盤失点を抑えるが疲労が増える。",
+          preserveArms: "継投: 連戦向き。疲労は下がるが終盤失点リスクが残る。",
+        }[bullpenPlan];
+
+        return [
+          recommendation,
+          "相手先発: 左の技巧派。制球が高く、長打狙いは三振リスクも上がる。",
+          "球場: バンテリンドーム想定。長打より出塁、守備、継投の価値が高い。",
+          `自軍状態: リリーフ疲労${Math.round(state.bullpenFatigue)}%。45%以上なら温存、30%以下なら早めの継投も選びやすい。`,
+          `今日の目標: ${state.currentMission?.label ?? "ミッション準備中"}`,
+          selectedBatting,
+          selectedBullpen,
+        ];
       }
 
       function simulateHalfInning({ offense, defense, battingPlan, inning, userSide }) {
@@ -543,6 +705,13 @@
         const badge = document.getElementById("resultBadge");
         badge.textContent = won ? "采配成功" : "課題が残る敗戦";
         badge.className = `result-badge ${won ? "win" : "loss"}`;
+        const ball = document.getElementById("pixelBall");
+        const runner = document.getElementById("pixelRunner");
+        ball.style.animation = "none";
+        runner.style.animation = "none";
+        void ball.offsetWidth;
+        ball.style.animation = won ? "ball-hit 1.5s steps(5, end) infinite" : "ball-grounder 1.5s steps(5, end) infinite";
+        runner.style.animation = "runner-advance 1.5s steps(5, end) infinite";
 
         const headerCells = ["Team", ...innings.map((_, index) => `${index + 1}`), "R"];
         const row = (name, key, total) =>
@@ -595,6 +764,9 @@
         document.getElementById("missions").innerHTML = state.currentMission
           ? `<li>・${state.currentMission.label}</li><li>・達成報酬: ${state.currentMission.reward}</li>`
           : "<li>・ミッション準備中</li>";
+        document.getElementById("decisionSupport").innerHTML = decisionSupport()
+          .map((item) => `<li>・${item}</li>`)
+          .join("");
       }
 
       function resetSeason() {
@@ -617,6 +789,8 @@
 
       document.getElementById("simulate").addEventListener("click", simulateGame);
       document.getElementById("reset").addEventListener("click", resetSeason);
+      document.getElementById("batting").addEventListener("change", updateSeasonMetrics);
+      document.getElementById("bullpen").addEventListener("change", updateSeasonMetrics);
       resetSeason();
     </script>
   </body>
