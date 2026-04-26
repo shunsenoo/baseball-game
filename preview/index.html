@@ -14,6 +14,7 @@
         --line: #d9e1ef;
         --win: #0b7a3b;
         --loss: #b3261e;
+        --gold: #a86b00;
       }
 
       * {
@@ -33,7 +34,7 @@
       }
 
       main {
-        width: min(980px, 100%);
+        width: min(1040px, 100%);
         margin: 0 auto;
         padding: 20px;
       }
@@ -89,7 +90,11 @@
         box-shadow: 0 10px 30px rgba(23, 32, 51, 0.07);
       }
 
-      @media (min-width: 820px) {
+      @media (min-width: 860px) {
+        .span-4 {
+          grid-column: span 4;
+        }
+
         .span-5 {
           grid-column: span 5;
         }
@@ -99,8 +104,38 @@
         }
       }
 
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      @media (min-width: 760px) {
+        .metrics {
+          grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+      }
+
+      .metric {
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #f8fbff;
+      }
+
+      .metric strong {
+        display: block;
+        font-size: 24px;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
       .focus-list,
-      .report-list {
+      .report-list,
+      .mission-list {
         display: grid;
         gap: 8px;
         margin: 0;
@@ -121,29 +156,28 @@
       }
 
       label {
-        display: block;
-        margin-bottom: 8px;
-        color: var(--muted);
-        font-size: 13px;
+        display: grid;
+        gap: 6px;
+        margin-bottom: 12px;
         font-weight: 700;
       }
 
       select,
       button {
-        width: 100%;
-        min-height: 46px;
-        border-radius: 14px;
+        min-height: 44px;
+        border-radius: 12px;
         font: inherit;
       }
 
       select {
-        margin-bottom: 14px;
-        padding: 0 12px;
+        width: 100%;
         border: 1px solid var(--line);
+        padding: 8px 12px;
         background: white;
       }
 
       button {
+        width: 100%;
         border: 0;
         background: var(--dragons-blue);
         color: white;
@@ -151,56 +185,72 @@
         font-weight: 800;
       }
 
-      button:hover {
-        filter: brightness(1.08);
+      button.secondary {
+        background: #516070;
       }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        overflow: hidden;
-        border-radius: 14px;
-        font-size: 14px;
+      button:active {
+        transform: translateY(1px);
       }
 
-      th,
-      td {
-        padding: 10px 8px;
-        border-bottom: 1px solid var(--line);
-        text-align: center;
-        white-space: nowrap;
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
       }
 
-      th:first-child,
-      td:first-child {
-        text-align: left;
-        font-weight: 800;
+      @media (min-width: 640px) {
+        .button-row {
+          grid-template-columns: 2fr 1fr;
+        }
       }
 
       .table-wrap {
         overflow-x: auto;
       }
 
+      table {
+        width: 100%;
+        min-width: 620px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 9px;
+        border-bottom: 1px solid var(--line);
+        text-align: center;
+      }
+
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+
       .result-badge {
         display: inline-flex;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         padding: 6px 12px;
         border-radius: 999px;
         color: white;
         font-weight: 800;
       }
 
-      .result-badge.win {
+      .win {
         background: var(--win);
       }
 
-      .result-badge.loss {
+      .loss {
         background: var(--loss);
+      }
+
+      .gold {
+        color: var(--gold);
+        font-weight: 800;
       }
 
       .notice {
         color: var(--muted);
-        font-size: 13px;
         line-height: 1.7;
       }
     </style>
@@ -208,52 +258,70 @@
   <body>
     <main>
       <header>
-        <div class="eyebrow">NO INSTALL PREVIEW</div>
-        <h1 class="headline">プロ野球フロントライン<br />簡易ブラウザ検証版</h1>
-        <div id="scoreLine" class="score-line">名古屋D 0 - 0 東京R</div>
-        <p>中日ドラゴンズ風チームを題材に、打撃方針と継投方針を選んで1試合をシミュレーションします。</p>
+        <div class="eyebrow">NO-INSTALL PROTOTYPE</div>
+        <h1 class="headline">プロ野球フロントライン</h1>
+        <div id="scoreLine" class="score-line">東京R 0 - 0 名古屋D</div>
+        <p>
+          10試合チャレンジで、勝敗、ファン支持率、育成ポイント、リリーフ疲労を管理します。
+          単発の結果を見るだけでなく、次戦に向けた選択を積み重ねる簡易ゲーム版です。
+        </p>
       </header>
 
       <section class="grid">
+        <div class="card">
+          <h2>シーズン状況</h2>
+          <div class="metrics">
+            <div class="metric"><strong id="record">0勝0敗</strong><span>10試合チャレンジ</span></div>
+            <div class="metric"><strong id="fanSupport">50</strong><span>ファン支持率</span></div>
+            <div class="metric"><strong id="ownerTrust">50</strong><span>オーナー評価</span></div>
+            <div class="metric"><strong id="trainingPoints">0</strong><span>育成ポイント</span></div>
+            <div class="metric"><strong id="bullpenFatigue">18</strong><span>リリーフ疲労</span></div>
+          </div>
+        </div>
+
         <div class="card span-5">
-          <h2>今日の采配方針</h2>
-          <label for="batting">攻撃方針</label>
-          <select id="batting">
-            <option value="balanced">バランス重視</option>
-            <option value="smallBall">つなぐ野球</option>
-            <option value="power">長打狙い</option>
-          </select>
-
-          <label for="bullpen">継投方針</label>
-          <select id="bullpen">
-            <option value="normal">通常運用</option>
-            <option value="quickHook">早めの継投</option>
-            <option value="preserveArms">リリーフ温存</option>
-          </select>
-
-          <button id="simulate">1試合をシミュレーション</button>
+          <h2>今日のミッション</h2>
+          <ul id="missions" class="mission-list"></ul>
         </div>
 
         <div class="card span-7">
-          <h2>中日ドラゴンズ重点プロトタイプ</h2>
-          <p class="notice">バンテリンドーム想定 / チーム課題</p>
-          <ul class="focus-list">
-            <li><span class="chip">投手力を活かす</span></li>
-            <li><span class="chip">守備で失点を減らす</span></li>
-            <li><span class="chip">得点力改善</span></li>
-            <li><span class="chip">若手起用</span></li>
-          </ul>
+          <h2>今日の采配方針</h2>
+          <label>
+            攻撃方針
+            <select id="batting">
+              <option value="balanced">バランス重視</option>
+              <option value="smallBall">つなぐ野球</option>
+              <option value="power">長打狙い</option>
+            </select>
+          </label>
+          <label>
+            継投方針
+            <select id="bullpen">
+              <option value="normal">通常運用</option>
+              <option value="quickHook">早めの継投</option>
+              <option value="preserveArms">リリーフ温存</option>
+            </select>
+          </label>
+          <div class="button-row">
+            <button id="simulate">次の試合へ</button>
+            <button id="reset" class="secondary">リセット</button>
+          </div>
         </div>
 
-        <div class="card">
+        <div class="card span-7">
           <h2>スコアボード</h2>
           <div class="table-wrap">
             <table id="scoreboard" aria-label="スコアボード"></table>
           </div>
         </div>
 
-        <div class="card span-7">
+        <div class="card span-5">
           <span id="resultBadge" class="result-badge loss">未試合</span>
+          <h2>試合後報酬</h2>
+          <ul id="rewards" class="report-list"></ul>
+        </div>
+
+        <div class="card span-7">
           <h2>試合後レポート</h2>
           <ul id="report" class="report-list"></ul>
         </div>
@@ -293,6 +361,25 @@
         defense: 70,
       };
 
+      const state = {
+        game: 0,
+        wins: 0,
+        losses: 0,
+        fanSupport: 50,
+        ownerTrust: 50,
+        trainingPoints: 0,
+        bullpenFatigue: 18,
+        currentMission: null,
+      };
+
+      const missions = [
+        { id: "win", label: "今日の目標: まず1勝する", check: ({ won }) => won, reward: "ファン支持率 +4" },
+        { id: "smallBall", label: "今日の目標: つなぐ野球で2点以上取る", check: ({ homeRuns, battingPlan }) => battingPlan === "smallBall" && homeRuns >= 2, reward: "育成ポイント +2" },
+        { id: "power", label: "今日の目標: 長打狙いで3点以上取る", check: ({ homeRuns, battingPlan }) => battingPlan === "power" && homeRuns >= 3, reward: "ファン支持率 +5" },
+        { id: "rest", label: "今日の目標: リリーフ温存で勝つ", check: ({ won, bullpenPlan }) => won && bullpenPlan === "preserveArms", reward: "リリーフ疲労 -5" },
+        { id: "close", label: "今日の目標: 接戦を制する", check: ({ won, homeRuns, awayRuns }) => won && Math.abs(homeRuns - awayRuns) <= 1, reward: "オーナー評価 +4" },
+      ];
+
       const battingLabels = {
         balanced: "打線はバランス型。出塁と長打の両方を狙いました。",
         smallBall: "打線は小技重視。バンテリンドームで1点を取りに行く設計です。",
@@ -313,6 +400,10 @@
         return Math.max(min, Math.min(max, value));
       }
 
+      function pickMission() {
+        state.currentMission = missions[state.game % missions.length];
+      }
+
       function simulateHalfInning({ offense, defense, battingPlan, inning, userSide }) {
         let runs = 0;
         let expected =
@@ -331,6 +422,11 @@
       }
 
       function simulateGame() {
+        if (state.game >= 10) {
+          renderSeasonFinished();
+          return;
+        }
+
         const battingPlan = document.getElementById("batting").value;
         const bullpenPlan = document.getElementById("bullpen").value;
         const innings = [];
@@ -359,7 +455,7 @@
             keyMoments.push(`${inning}回、早めの継投で終盤の失点期待値を下げました。`);
           }
           if (inning >= 7 && bullpenPlan === "preserveArms") {
-            away += chance(0.28);
+            away += chance(0.28 + state.bullpenFatigue / 250);
             keyMoments.push(`${inning}回、リリーフ温存により終盤の失点リスクが残りました。`);
           }
           if (inning >= 6 && home > 0) {
@@ -381,10 +477,65 @@
           }
         }
 
-        render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments });
+        const won = homeRuns > awayRuns;
+        const missionCleared = state.currentMission.check({ won, homeRuns, awayRuns, battingPlan, bullpenPlan });
+        const rewards = applyProgress({ won, homeRuns, awayRuns, battingPlan, bullpenPlan, missionCleared });
+        state.game += 1;
+        if (state.game < 10) pickMission();
+
+        render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments, rewards, missionCleared });
       }
 
-      function render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments }) {
+      function applyProgress({ won, homeRuns, awayRuns, battingPlan, bullpenPlan, missionCleared }) {
+        const rewards = [];
+        if (won) {
+          state.wins += 1;
+          state.fanSupport += 3;
+          state.ownerTrust += 2;
+          state.trainingPoints += 2;
+          rewards.push("勝利報酬: ファン支持率 +3 / オーナー評価 +2 / 育成ポイント +2");
+        } else {
+          state.losses += 1;
+          state.fanSupport -= 2;
+          state.ownerTrust -= 1;
+          state.trainingPoints += 1;
+          rewards.push("敗戦でも若手経験値: 育成ポイント +1");
+        }
+
+        if (battingPlan === "smallBall" && homeRuns >= 2) {
+          state.trainingPoints += 1;
+          rewards.push("つなぐ野球成功: 育成ポイント +1");
+        }
+        if (battingPlan === "power" && homeRuns >= 3) {
+          state.fanSupport += 2;
+          rewards.push("得点力アピール: ファン支持率 +2");
+        }
+
+        if (bullpenPlan === "quickHook") {
+          state.bullpenFatigue += 7;
+          rewards.push("早めの継投: リリーフ疲労 +7");
+        } else if (bullpenPlan === "preserveArms") {
+          state.bullpenFatigue -= 5;
+          rewards.push("温存成功: リリーフ疲労 -5");
+        } else {
+          state.bullpenFatigue += 3;
+        }
+
+        if (missionCleared) {
+          state.fanSupport += 3;
+          state.ownerTrust += 2;
+          state.trainingPoints += 1;
+          rewards.push(`ミッション達成: ${state.currentMission.reward}`);
+        }
+
+        state.fanSupport = clamp(state.fanSupport, 0, 100);
+        state.ownerTrust = clamp(state.ownerTrust, 0, 100);
+        state.bullpenFatigue = clamp(state.bullpenFatigue, 0, 100);
+        return rewards;
+      }
+
+      function render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments, rewards, missionCleared }) {
+        updateSeasonMetrics();
         document.getElementById("scoreLine").textContent =
           `${opponent.shortName} ${awayRuns} - ${homeRuns} ${team.shortName}`;
 
@@ -405,13 +556,14 @@
           `${team.shortName}は${opponent.shortName}に${homeRuns}-${awayRuns}で${won ? "勝利" : "敗戦"}。${gameShape}でした。`,
           battingLabels[battingPlan],
           bullpenLabels[bullpenPlan],
-          "バンテリンドーム想定のため、長打よりも守備、走塁、継投判断が勝敗に出やすい設計です。",
+          missionCleared ? "今日のミッションを達成。短期シーズンの流れが良くなりました。" : "今日のミッションは未達。次戦の方針を見直しましょう。",
           ...(keyMoments.length ? keyMoments.slice(0, 3) : ["大きな勝負所は少なく、淡々としたロースコア展開でした。"]),
         ];
         document.getElementById("report").innerHTML = report.map((item) => `<li>・${item}</li>`).join("");
+        document.getElementById("rewards").innerHTML = rewards.map((item) => `<li>・${item}</li>`).join("");
 
         const recommendations = won
-          ? ["次戦も同じ方針で入り、疲労が高いリリーフだけ入れ替える。", "若手の途中出場枠を1つ増やし、勝ちながら育成する。"]
+          ? ["次戦も同じ方針で入り、疲労が高いリリーフだけ入れ替える。", "育成ポイントで若き中軸候補を強化する。"]
           : [
               battingPlan === "power"
                 ? "長打狙いで得点が伸びなければ、次戦はつなぐ野球も試す。"
@@ -425,8 +577,47 @@
           .join("");
       }
 
+      function renderSeasonFinished() {
+        const grade = state.wins >= 7 ? "A" : state.wins >= 5 ? "B" : "C";
+        document.getElementById("report").innerHTML =
+          `<li>・10試合チャレンジ終了。評価は<span class="gold">${grade}</span>です。</li>` +
+          `<li>・最終成績: ${state.wins}勝${state.losses}敗 / ファン支持率 ${state.fanSupport} / オーナー評価 ${state.ownerTrust}</li>`;
+        document.getElementById("recommendations").innerHTML =
+          "<li>・次の検証ではドラフト、二軍昇格、選手強化を追加するとゲーム性が上がります。</li>";
+      }
+
+      function updateSeasonMetrics() {
+        document.getElementById("record").textContent = `${state.wins}勝${state.losses}敗`;
+        document.getElementById("fanSupport").textContent = Math.round(state.fanSupport);
+        document.getElementById("ownerTrust").textContent = Math.round(state.ownerTrust);
+        document.getElementById("trainingPoints").textContent = state.trainingPoints;
+        document.getElementById("bullpenFatigue").textContent = Math.round(state.bullpenFatigue);
+        document.getElementById("missions").innerHTML = state.currentMission
+          ? `<li>・${state.currentMission.label}</li><li>・達成報酬: ${state.currentMission.reward}</li>`
+          : "<li>・ミッション準備中</li>";
+      }
+
+      function resetSeason() {
+        state.game = 0;
+        state.wins = 0;
+        state.losses = 0;
+        state.fanSupport = 50;
+        state.ownerTrust = 50;
+        state.trainingPoints = 0;
+        state.bullpenFatigue = 18;
+        pickMission();
+        updateSeasonMetrics();
+        document.getElementById("scoreLine").textContent = "東京R 0 - 0 名古屋D";
+        document.getElementById("resultBadge").textContent = "未試合";
+        document.getElementById("scoreboard").innerHTML = "";
+        document.getElementById("rewards").innerHTML = "<li>・試合を進めると報酬が表示されます。</li>";
+        document.getElementById("report").innerHTML = "<li>・今日の方針を選んで、10試合チャレンジを始めましょう。</li>";
+        document.getElementById("recommendations").innerHTML = "<li>・まずは通常運用で基準の強さを確認しましょう。</li>";
+      }
+
       document.getElementById("simulate").addEventListener("click", simulateGame);
-      simulateGame();
+      document.getElementById("reset").addEventListener("click", resetSeason);
+      resetSeason();
     </script>
   </body>
 </html>

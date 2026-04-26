@@ -7,6 +7,17 @@ void main() {
   runApp(const BaseballGameApp());
 }
 
+enum FrontOfficeMove {
+  restBullpen('リリーフ休養', '終盤失点リスクを下げるが、育成ポイントは伸びにくい'),
+  trainProspect('若手強化', '短期勝率より将来性。勝てばファン支持が大きく伸びる'),
+  boostLineup('得点力テコ入れ', '打線にボーナス。失敗するとオーナー評価が下がる');
+
+  const FrontOfficeMove(this.label, this.description);
+
+  final String label;
+  final String description;
+}
+
 class BaseballGameApp extends StatelessWidget {
   const BaseballGameApp({super.key});
 
@@ -37,17 +48,35 @@ class PrototypeHomePage extends StatefulWidget {
 }
 
 class _PrototypeHomePageState extends State<PrototypeHomePage> {
-  final BaseballSimulator _simulator = BaseballSimulator();
-  late MatchResult _result = _simulator.simulate(
-    homeTeam: DemoTeams.dragons,
-    awayTeam: DemoTeams.tokyo,
-    gamePlan: _gamePlan,
-  );
+  static const _seasonLength = 10;
 
-  static GamePlan _gamePlan = const GamePlan(
+  final BaseballSimulator _simulator = BaseballSimulator();
+  GamePlan _gamePlan = const GamePlan(
     battingApproach: BattingApproach.balanced,
     bullpenApproach: BullpenApproach.normal,
   );
+  FrontOfficeMove _frontOfficeMove = FrontOfficeMove.restBullpen;
+  MatchResult? _result;
+  int _game = 0;
+  int _wins = 0;
+  int _losses = 0;
+  int _fanSupport = 52;
+  int _ownerTrust = 50;
+  int _developmentPoints = 0;
+  int _bullpenFatigue = 18;
+  List<String> _lastRewards = const ['采配方針を決めて、10試合チャレンジを始めよう。'];
+
+  String get _mission {
+    if (_game % 3 == 0) {
+      return 'ミッション: 3点以上取って得点力不足を払拭';
+    }
+    if (_game % 3 == 1) {
+      return 'ミッション: 接戦を制してファン支持率+5';
+    }
+    return 'ミッション: リリーフ疲労を35以下に抑える';
+  }
+
+  bool get _seasonFinished => _game >= _seasonLength;
 
   void _updateBattingApproach(BattingApproach? approach) {
     if (approach == null) {
@@ -73,13 +102,95 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
     });
   }
 
-  void _simulateGame() {
+  void _updateFrontOfficeMove(FrontOfficeMove? move) {
+    if (move == null) {
+      return;
+    }
     setState(() {
-      _result = _simulator.simulate(
-        homeTeam: DemoTeams.dragons,
-        awayTeam: DemoTeams.tokyo,
-        gamePlan: _gamePlan,
+      _frontOfficeMove = move;
+    });
+  }
+
+  void _simulateGame() {
+    if (_seasonFinished) {
+      return;
+    }
+
+    final result = _simulator.simulate(
+      homeTeam: DemoTeams.dragons,
+      awayTeam: DemoTeams.tokyo,
+      gamePlan: _gamePlan,
+    );
+    final won = result.homeWon;
+    final closeGame = (result.homeRuns - result.awayRuns).abs() <= 1;
+    final rewards = <String>[];
+
+    var fanDelta = won ? 4 : -3;
+    var ownerDelta = won ? 3 : -2;
+    var developmentDelta = won ? 2 : 1;
+    var fatigueDelta = switch (_gamePlan.bullpenApproach) {
+      BullpenApproach.quickHook => 9,
+      BullpenApproach.normal => 5,
+      BullpenApproach.preserveArms => -4,
+    };
+
+    switch (_frontOfficeMove) {
+      case FrontOfficeMove.restBullpen:
+        fatigueDelta -= 8;
+        ownerDelta += closeGame && won ? 1 : 0;
+        rewards.add('リリーフ休養でブルペン疲労を抑えました。');
+      case FrontOfficeMove.trainProspect:
+        developmentDelta += 5;
+        fanDelta += won ? 2 : -1;
+        rewards.add('若手強化で育成ポイントを大きく獲得しました。');
+      case FrontOfficeMove.boostLineup:
+        fanDelta += result.homeRuns >= 3 ? 4 : -2;
+        ownerDelta += result.homeRuns >= 3 ? 2 : -3;
+        rewards.add(result.homeRuns >= 3 ? '打線テコ入れが成功しました。' : '打線テコ入れは不発でした。');
+    }
+
+    final missionCleared =
+        (_game % 3 == 0 && result.homeRuns >= 3) ||
+        (_game % 3 == 1 && won && closeGame) ||
+        (_game % 3 == 2 && _bullpenFatigue + fatigueDelta <= 35);
+    if (missionCleared) {
+      fanDelta += 5;
+      developmentDelta += 2;
+      rewards.add('今日のミッション達成。ファン支持率と育成ポイントが上昇。');
+    } else {
+      rewards.add('ミッション未達。次戦の方針を変える余地があります。');
+    }
+
+    setState(() {
+      _result = result;
+      _game++;
+      if (won) {
+        _wins++;
+      } else {
+        _losses++;
+      }
+      _fanSupport = (_fanSupport + fanDelta).clamp(0, 100);
+      _ownerTrust = (_ownerTrust + ownerDelta).clamp(0, 100);
+      _developmentPoints = (_developmentPoints + developmentDelta).clamp(
+        0,
+        999,
       );
+      _bullpenFatigue = (_bullpenFatigue + fatigueDelta).clamp(0, 100);
+      _lastRewards = rewards;
+    });
+  }
+
+  void _resetSeason() {
+    setState(() {
+      _result = null;
+      _game = 0;
+      _wins = 0;
+      _losses = 0;
+      _fanSupport = 52;
+      _ownerTrust = 50;
+      _developmentPoints = 0;
+      _bullpenFatigue = 18;
+      _lastRewards = const ['采配方針を決めて、10試合チャレンジを始めよう。'];
     });
   }
 
@@ -96,21 +207,42 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _HeroCard(result: _result),
+          _HeroCard(
+            result: _result,
+            game: _game,
+            seasonLength: _seasonLength,
+            wins: _wins,
+            losses: _losses,
+          ),
           const SizedBox(height: 16),
-          _TeamFocusCard(team: DemoTeams.dragons),
+          _SeasonStatusCard(
+            fanSupport: _fanSupport,
+            ownerTrust: _ownerTrust,
+            developmentPoints: _developmentPoints,
+            bullpenFatigue: _bullpenFatigue,
+          ),
+          const SizedBox(height: 16),
+          _MissionCard(mission: _mission, rewards: _lastRewards),
           const SizedBox(height: 16),
           _PlanCard(
             gamePlan: _gamePlan,
+            frontOfficeMove: _frontOfficeMove,
+            seasonFinished: _seasonFinished,
             onBattingChanged: _updateBattingApproach,
             onBullpenChanged: _updateBullpenApproach,
+            onFrontOfficeChanged: _updateFrontOfficeMove,
             onSimulate: _simulateGame,
+            onReset: _resetSeason,
           ),
           const SizedBox(height: 16),
-          _ScoreboardCard(result: _result),
+          _TeamFocusCard(team: DemoTeams.dragons),
           const SizedBox(height: 16),
-          _ReportCard(result: _result),
-          const SizedBox(height: 16),
+          if (_result != null) ...[
+            _ScoreboardCard(result: _result!),
+            const SizedBox(height: 16),
+            _ReportCard(result: _result!),
+            const SizedBox(height: 16),
+          ],
           const _LicenseNoticeCard(),
         ],
       ),
@@ -119,14 +251,29 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.result});
+  const _HeroCard({
+    required this.result,
+    required this.game,
+    required this.seasonLength,
+    required this.wins,
+    required this.losses,
+  });
 
-  final MatchResult result;
+  final MatchResult? result;
+  final int game;
+  final int seasonLength;
+  final int wins;
+  final int losses;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final headline = result.homeWon ? '采配成功、接戦を制す' : '課題が残る敗戦';
+    final headline = result == null
+        ? '10試合でドラゴンズを立て直せ'
+        : result!.homeWon
+        ? '采配成功、接戦を制す'
+        : '課題が残る敗戦';
+    final scoreLine = result?.scoreLine ?? '開幕前: $wins勝$losses敗';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -146,7 +293,7 @@ class _HeroCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '中日ドラゴンズ風チーム 技術検証',
+              '中日ドラゴンズ風チーム ゲーム検証',
               style: theme.textTheme.labelLarge?.copyWith(
                 color: theme.colorScheme.onPrimary,
               ),
@@ -161,18 +308,119 @@ class _HeroCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              result.scoreLine,
+              scoreLine,
               style: theme.textTheme.titleLarge?.copyWith(
                 color: theme.colorScheme.onPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'バンテリンドーム想定の低得点環境で、得点力改善と継投判断を検証します。',
+              '第$game/$seasonLength戦  $wins勝$losses敗。ミッションと資源管理で短期シーズンを戦います。',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onPrimary,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SeasonStatusCard extends StatelessWidget {
+  const _SeasonStatusCard({
+    required this.fanSupport,
+    required this.ownerTrust,
+    required this.developmentPoints,
+    required this.bullpenFatigue,
+  });
+
+  final int fanSupport;
+  final int ownerTrust;
+  final int developmentPoints;
+  final int bullpenFatigue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('球団状態', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _MetricTile(label: 'ファン支持率', value: '$fanSupport%'),
+                _MetricTile(label: 'オーナー評価', value: '$ownerTrust%'),
+                _MetricTile(label: '育成ポイント', value: '$developmentPoints'),
+                _MetricTile(label: 'リリーフ疲労', value: '$bullpenFatigue%'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 150,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surfaceContainerHighest,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.labelMedium),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionCard extends StatelessWidget {
+  const _MissionCard({required this.mission, required this.rewards});
+
+  final String mission;
+  final List<String> rewards;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(mission, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            Text('前回の報酬/結果', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final reward in rewards) _BulletText(reward),
           ],
         ),
       ),
@@ -214,15 +462,23 @@ class _TeamFocusCard extends StatelessWidget {
 class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.gamePlan,
+    required this.frontOfficeMove,
+    required this.seasonFinished,
     required this.onBattingChanged,
     required this.onBullpenChanged,
+    required this.onFrontOfficeChanged,
     required this.onSimulate,
+    required this.onReset,
   });
 
   final GamePlan gamePlan;
+  final FrontOfficeMove frontOfficeMove;
+  final bool seasonFinished;
   final ValueChanged<BattingApproach?> onBattingChanged;
   final ValueChanged<BullpenApproach?> onBullpenChanged;
+  final ValueChanged<FrontOfficeMove?> onFrontOfficeChanged;
   final VoidCallback onSimulate;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -261,13 +517,29 @@ class _PlanCard extends StatelessWidget {
                   .toList(),
               onChanged: onBullpenChanged,
             ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<FrontOfficeMove>(
+              initialValue: frontOfficeMove,
+              decoration: const InputDecoration(labelText: '試合前フロント施策'),
+              items: FrontOfficeMove.values
+                  .map(
+                    (move) =>
+                        DropdownMenuItem(value: move, child: Text(move.label)),
+                  )
+                  .toList(),
+              onChanged: onFrontOfficeChanged,
+            ),
+            const SizedBox(height: 8),
+            Text(frontOfficeMove.description),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: onSimulate,
-                icon: const Icon(Icons.sports_baseball),
-                label: const Text('1試合をシミュレーション'),
+                onPressed: seasonFinished ? onReset : onSimulate,
+                icon: Icon(
+                  seasonFinished ? Icons.restart_alt : Icons.sports_baseball,
+                ),
+                label: Text(seasonFinished ? '10試合チャレンジをリセット' : '次の試合へ進む'),
               ),
             ),
           ],
