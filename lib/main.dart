@@ -18,6 +18,50 @@ enum FrontOfficeMove {
   final String description;
 }
 
+enum LineupPlan {
+  onBaseTop('出塁型を上位固定', '上位打線の出塁率を優先。つなぐ野球や接戦向き'),
+  powerCore('長打型を中軸集中', '3点以上を狙う布陣。三振と凡退の波も大きい'),
+  youthStart('若手をスタメン起用', '短期勝率は少し落ちるが育成ポイントが伸びる');
+
+  const LineupPlan(this.label, this.description);
+
+  final String label;
+  final String description;
+}
+
+enum RunningPlan {
+  stationToStation('無理せず進塁', 'アウトを避ける安全策。ロースコアで安定しやすい'),
+  stealAndRun('盗塁・エンドラン', '成功すれば得点期待値が上がるが、失敗時は好機を失う'),
+  buntPressure('バント・進塁打徹底', '1点を取りに行く。接戦ミッションと相性が良い');
+
+  const RunningPlan(this.label, this.description);
+
+  final String label;
+  final String description;
+}
+
+enum DefensePlan {
+  standard('標準守備', '大きな弱点を作らない基本形'),
+  noDoubles('長打警戒シフト', '外野を深めに守る。長打を減らすが単打は増えやすい'),
+  infieldIn('内野前進・1点阻止', '終盤接戦で1点を防ぐ。抜ければ大量失点リスク');
+
+  const DefensePlan(this.label, this.description);
+
+  final String label;
+  final String description;
+}
+
+enum ClutchPlan {
+  trustStarter('先発を信頼', '球数が増えても先発を引っ張る。中継ぎ疲労を抑える'),
+  pinchHitEarly('代打を早めに投入', '得点機で勝負をかける。ベンチ消費は増える'),
+  closerForFourOuts('抑え回跨ぎも許可', '接戦の勝率を上げるが、リリーフ疲労が大きい');
+
+  const ClutchPlan(this.label, this.description);
+
+  final String label;
+  final String description;
+}
+
 class BaseballGameApp extends StatelessWidget {
   const BaseballGameApp({super.key});
 
@@ -73,6 +117,10 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
     bullpenApproach: BullpenApproach.normal,
   );
   FrontOfficeMove _frontOfficeMove = FrontOfficeMove.restBullpen;
+  LineupPlan _lineupPlan = LineupPlan.onBaseTop;
+  RunningPlan _runningPlan = RunningPlan.stationToStation;
+  DefensePlan _defensePlan = DefensePlan.standard;
+  ClutchPlan _clutchPlan = ClutchPlan.trustStarter;
   MatchResult? _result;
   int _game = 0;
   int _wins = 0;
@@ -133,7 +181,63 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
       FrontOfficeMove.trainProspect => '施策: 育成ポイント重視。勝てばファン支持も伸びる。',
       FrontOfficeMove.boostLineup => '施策: 得点力ミッション向き。3点未満だと評価が下がりやすい。',
     };
-    return [batting, bullpen, front];
+    final lineup = switch (_lineupPlan) {
+      LineupPlan.onBaseTop => '打順: 出塁型を上位に置き、初回と終盤の好機を増やす。',
+      LineupPlan.powerCore => '打順: 長打型を中軸集中。3点以上狙いだが凡退の波も大きい。',
+      LineupPlan.youthStart => '打順: 若手スタメン。育成は伸びるが短期の得点期待値は不安定。',
+    };
+    final running = switch (_runningPlan) {
+      RunningPlan.stationToStation => '走塁: 無理せず進塁。アウトを減らし、接戦で安定する。',
+      RunningPlan.stealAndRun => '走塁: 盗塁/エンドラン。成功時は得点期待値が上がるが失敗リスクあり。',
+      RunningPlan.buntPressure => '走塁: バント/進塁打。1点勝負と接戦ミッションに強い。',
+    };
+    final defense = switch (_defensePlan) {
+      DefensePlan.standard => '守備: 標準守備。相手に合わせすぎず大崩れを避ける。',
+      DefensePlan.noDoubles => '守備: 長打警戒。外野を深くし、バンテリンらしいロースコアへ寄せる。',
+      DefensePlan.infieldIn => '守備: 内野前進。終盤の1点阻止に賭けるハイリスク采配。',
+    };
+    final clutch = switch (_clutchPlan) {
+      ClutchPlan.trustStarter => '勝負所: 先発を信頼。中継ぎ疲労を抑えるが終盤に捕まるリスク。',
+      ClutchPlan.pinchHitEarly => '勝負所: 代打を早めに投入。得点機で勝負する攻撃的采配。',
+      ClutchPlan.closerForFourOuts => '勝負所: 抑え回跨ぎ。接戦勝率を上げるが疲労が大きい。',
+    };
+    return [batting, bullpen, front, lineup, running, defense, clutch];
+  }
+
+  void _updateLineupPlan(LineupPlan? plan) {
+    if (plan == null) {
+      return;
+    }
+    setState(() {
+      _lineupPlan = plan;
+    });
+  }
+
+  void _updateRunningPlan(RunningPlan? plan) {
+    if (plan == null) {
+      return;
+    }
+    setState(() {
+      _runningPlan = plan;
+    });
+  }
+
+  void _updateDefensePlan(DefensePlan? plan) {
+    if (plan == null) {
+      return;
+    }
+    setState(() {
+      _defensePlan = plan;
+    });
+  }
+
+  void _updateClutchPlan(ClutchPlan? plan) {
+    if (plan == null) {
+      return;
+    }
+    setState(() {
+      _clutchPlan = plan;
+    });
   }
 
   void _updateBattingApproach(BattingApproach? approach) {
@@ -293,10 +397,18 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
           _PlanCard(
             gamePlan: _gamePlan,
             frontOfficeMove: _frontOfficeMove,
+            lineupPlan: _lineupPlan,
+            runningPlan: _runningPlan,
+            defensePlan: _defensePlan,
+            clutchPlan: _clutchPlan,
             seasonFinished: _seasonFinished,
             onBattingChanged: _updateBattingApproach,
             onBullpenChanged: _updateBullpenApproach,
             onFrontOfficeChanged: _updateFrontOfficeMove,
+            onLineupChanged: _updateLineupPlan,
+            onRunningChanged: _updateRunningPlan,
+            onDefenseChanged: _updateDefensePlan,
+            onClutchChanged: _updateClutchPlan,
             onSimulate: _simulateGame,
             onReset: _resetSeason,
           ),
@@ -576,20 +688,36 @@ class _PlanCard extends StatelessWidget {
   const _PlanCard({
     required this.gamePlan,
     required this.frontOfficeMove,
+    required this.lineupPlan,
+    required this.runningPlan,
+    required this.defensePlan,
+    required this.clutchPlan,
     required this.seasonFinished,
     required this.onBattingChanged,
     required this.onBullpenChanged,
     required this.onFrontOfficeChanged,
+    required this.onLineupChanged,
+    required this.onRunningChanged,
+    required this.onDefenseChanged,
+    required this.onClutchChanged,
     required this.onSimulate,
     required this.onReset,
   });
 
   final GamePlan gamePlan;
   final FrontOfficeMove frontOfficeMove;
+  final LineupPlan lineupPlan;
+  final RunningPlan runningPlan;
+  final DefensePlan defensePlan;
+  final ClutchPlan clutchPlan;
   final bool seasonFinished;
   final ValueChanged<BattingApproach?> onBattingChanged;
   final ValueChanged<BullpenApproach?> onBullpenChanged;
   final ValueChanged<FrontOfficeMove?> onFrontOfficeChanged;
+  final ValueChanged<LineupPlan?> onLineupChanged;
+  final ValueChanged<RunningPlan?> onRunningChanged;
+  final ValueChanged<DefensePlan?> onDefenseChanged;
+  final ValueChanged<ClutchPlan?> onClutchChanged;
   final VoidCallback onSimulate;
   final VoidCallback onReset;
 
@@ -617,6 +745,34 @@ class _PlanCard extends StatelessWidget {
               onChanged: onBattingChanged,
             ),
             const SizedBox(height: 12),
+            DropdownButtonFormField<LineupPlan>(
+              initialValue: lineupPlan,
+              decoration: const InputDecoration(labelText: '打順構成'),
+              items: LineupPlan.values
+                  .map(
+                    (plan) =>
+                        DropdownMenuItem(value: plan, child: Text(plan.label)),
+                  )
+                  .toList(),
+              onChanged: onLineupChanged,
+            ),
+            const SizedBox(height: 8),
+            Text(lineupPlan.description),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<RunningPlan>(
+              initialValue: runningPlan,
+              decoration: const InputDecoration(labelText: '走塁・小技'),
+              items: RunningPlan.values
+                  .map(
+                    (plan) =>
+                        DropdownMenuItem(value: plan, child: Text(plan.label)),
+                  )
+                  .toList(),
+              onChanged: onRunningChanged,
+            ),
+            const SizedBox(height: 8),
+            Text(runningPlan.description),
+            const SizedBox(height: 12),
             DropdownButtonFormField<BullpenApproach>(
               initialValue: gamePlan.bullpenApproach,
               decoration: const InputDecoration(labelText: '継投方針'),
@@ -630,6 +786,34 @@ class _PlanCard extends StatelessWidget {
                   .toList(),
               onChanged: onBullpenChanged,
             ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<DefensePlan>(
+              initialValue: defensePlan,
+              decoration: const InputDecoration(labelText: '守備シフト'),
+              items: DefensePlan.values
+                  .map(
+                    (plan) =>
+                        DropdownMenuItem(value: plan, child: Text(plan.label)),
+                  )
+                  .toList(),
+              onChanged: onDefenseChanged,
+            ),
+            const SizedBox(height: 8),
+            Text(defensePlan.description),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<ClutchPlan>(
+              initialValue: clutchPlan,
+              decoration: const InputDecoration(labelText: '勝負所采配'),
+              items: ClutchPlan.values
+                  .map(
+                    (plan) =>
+                        DropdownMenuItem(value: plan, child: Text(plan.label)),
+                  )
+                  .toList(),
+              onChanged: onClutchChanged,
+            ),
+            const SizedBox(height: 8),
+            Text(clutchPlan.description),
             const SizedBox(height: 12),
             DropdownButtonFormField<FrontOfficeMove>(
               initialValue: frontOfficeMove,
