@@ -733,7 +733,10 @@ class _PixelGameAnimationCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ドット絵リプレイ', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              '8bitハイライトリプレイ',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
               !hasResult
@@ -783,28 +786,79 @@ class _PixelFieldPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final pixel = size.shortestSide / 34;
-    final borderPaint = Paint()..color = const Color(0xFF18213A);
+    final pixel = size.shortestSide / 38;
+    final framePaint = Paint()..color = const Color(0xFF101829);
+    final skyPaint = Paint()..color = const Color(0xFF172A55);
+    final standPaint = Paint()..color = const Color(0xFF263A62);
     final grassPaint = Paint()..color = const Color(0xFF4F8F3A);
+    final grassAltPaint = Paint()..color = const Color(0xFF5FA84B);
     final dirtPaint = Paint()..color = const Color(0xFFC68D4C);
     final linePaint = Paint()
       ..color = const Color(0xFFFFF7D6)
-      ..strokeWidth = pixel * 0.45
+      ..strokeWidth = pixel * 0.42
       ..style = PaintingStyle.stroke;
     final basePaint = Paint()..color = const Color(0xFFFFF7D6);
-    final playerPaint = Paint()..color = const Color(0xFF003B7A);
+    final playerPaint = Paint()..color = const Color(0xFF0A56B3);
     final rivalPaint = Paint()..color = const Color(0xFFB3261E);
     final ballPaint = Paint()..color = const Color(0xFFFFFFFF);
-    final shadowPaint = Paint()..color = const Color(0x55000000);
+    final trailPaint = Paint()..color = const Color(0xAAFFF06A);
+    final shadowPaint = Paint()..color = const Color(0x66000000);
+    final flashPaint = Paint()..color = const Color(0x66FFF06A);
 
-    canvas.drawRect(Offset.zero & size, borderPaint);
-    final field = Rect.fromLTWH(
+    canvas.drawRect(Offset.zero & size, framePaint);
+    final screen = Rect.fromLTWH(
       pixel,
       pixel,
       size.width - pixel * 2,
       size.height - pixel * 2,
     );
+    canvas.drawRect(screen, skyPaint);
+
+    final stand = Rect.fromLTWH(
+      pixel * 2,
+      pixel * 2,
+      size.width - pixel * 4,
+      size.height * 0.25,
+    );
+    canvas.drawRect(stand, standPaint);
+    for (var row = 0; row < 4; row++) {
+      for (var col = 0; col < 28; col++) {
+        final color = [
+          const Color(0xFFFFF7D6),
+          const Color(0xFF4FB0FF),
+          const Color(0xFFFFC44D),
+          const Color(0xFFE95B5B),
+        ][(row + col) % 4];
+        canvas.drawRect(
+          Rect.fromLTWH(
+            pixel * 3 + col * pixel * 1.45,
+            pixel * 3 + row * pixel * 1.4,
+            pixel * 0.7,
+            pixel * 0.7,
+          ),
+          Paint()..color = color,
+        );
+      }
+    }
+
+    final field = Rect.fromLTWH(
+      pixel,
+      size.height * 0.25,
+      size.width - pixel * 2,
+      size.height * 0.72,
+    );
     canvas.drawRect(field, grassPaint);
+    for (var stripe = 0; stripe < 9; stripe++) {
+      canvas.drawRect(
+        Rect.fromLTWH(
+          field.left + stripe * field.width / 9,
+          field.top,
+          field.width / 18,
+          field.height,
+        ),
+        grassAltPaint,
+      );
+    }
 
     final home = Offset(size.width * 0.50, size.height * 0.78);
     final first = Offset(size.width * 0.68, size.height * 0.60);
@@ -821,6 +875,10 @@ class _PixelFieldPainter extends CustomPainter {
       ..lineTo(second.dx, second.dy)
       ..lineTo(third.dx, third.dy)
       ..close();
+    if (progress > 0.35 && homeWon) {
+      canvas.drawCircle(outfield, pixel * (4 + homeRuns), flashPaint);
+    }
+
     canvas.drawPath(infield, dirtPaint);
     canvas.drawPath(infield, linePaint);
     canvas.drawLine(
@@ -834,10 +892,15 @@ class _PixelFieldPainter extends CustomPainter {
       linePaint,
     );
 
-    for (final base in [home, first, second, third]) {
+    final litBases = homeWon
+        ? (progress * 4).floor()
+        : (progress * 1.4).floor();
+    for (final entry in [home, first, second, third].asMap().entries) {
+      final base = entry.value;
+      final lit = entry.key <= litBases;
       canvas.drawRect(
-        Rect.fromCenter(center: base, width: pixel * 2, height: pixel * 2),
-        basePaint,
+        Rect.fromCenter(center: base, width: pixel * 2.2, height: pixel * 2.2),
+        lit ? (Paint()..color = const Color(0xFFFFF06A)) : basePaint,
       );
     }
 
@@ -874,18 +937,50 @@ class _PixelFieldPainter extends CustomPainter {
     final ballPath = progress < 0.35
         ? Offset.lerp(mound, home, progress / 0.35)!
         : Offset.lerp(home, outfield, ((progress - 0.35) / 0.65).clamp(0, 1))!;
+    for (var i = 1; i <= 5; i++) {
+      final trailProgress = (progress - i * 0.035).clamp(0, 1).toDouble();
+      final trailPoint = trailProgress < 0.35
+          ? Offset.lerp(mound, home, trailProgress / 0.35)!
+          : Offset.lerp(
+              home,
+              outfield,
+              ((trailProgress - 0.35) / 0.65).clamp(0, 1).toDouble(),
+            )!;
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: trailPoint,
+          width: pixel * (1.2 - i * 0.12),
+          height: pixel * (1.2 - i * 0.12),
+        ),
+        trailPaint,
+      );
+    }
     canvas.drawRect(
       Rect.fromCenter(
         center: ballPath,
-        width: pixel * (homeRuns >= 3 ? 1.7 : 1.3),
-        height: pixel * (homeRuns >= 3 ? 1.7 : 1.3),
+        width: pixel * (homeRuns >= 3 ? 2.2 : 1.7),
+        height: pixel * (homeRuns >= 3 ? 2.2 : 1.7),
       ),
       ballPaint,
     );
 
+    final scoreboard = Rect.fromLTWH(
+      size.width * 0.35,
+      pixel * 2.1,
+      size.width * 0.30,
+      pixel * 5.2,
+    );
+    canvas.drawRect(scoreboard, framePaint);
+    canvas.drawRect(
+      scoreboard.deflate(pixel * 0.45),
+      Paint()..color = const Color(0xFF07111F),
+    );
+
     final textPainter = TextPainter(
       text: TextSpan(
-        text: homeWon ? 'HIT!' : 'OUT?',
+        text: homeWon
+            ? (homeRuns >= 3 ? 'BIG HIT!!' : 'GO AHEAD!')
+            : 'NICE PLAY!',
         style: TextStyle(
           color: const Color(0xFFFFF7D6),
           fontFamily: 'monospace',
@@ -895,7 +990,10 @@ class _PixelFieldPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    textPainter.paint(canvas, Offset(pixel * 2, pixel * 2));
+    textPainter.paint(
+      canvas,
+      Offset(scoreboard.left + pixel, scoreboard.top + pixel * 1.3),
+    );
   }
 
   Offset _pointOnPath(List<Offset> points, double progress) {
