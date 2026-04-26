@@ -23,6 +23,25 @@ flutter analyze
 flutter run
 ```
 
+### Browser preview
+
+Web対応済みなので、Flutterが入っている環境ではブラウザで確認できます。
+
+```sh
+flutter pub get
+flutter run -d chrome
+```
+
+Gitを入れられないWindows環境では、GitHubのブランチ画面からZIPをダウンロードして解凍してください。
+
+1. `https://github.com/shunsenoo/baseball-game/tree/cursor/baseball-sim-game-plan-87e2` を開く
+2. `Code` -> `Download ZIP` を選ぶ
+3. ZIPを解凍する
+4. PowerShellで解凍したフォルダに移動する
+5. `flutter run -d chrome` を実行する
+
+Flutterも入れられない場合は、Cloud側でWebビルドまたは一時プレビューを用意して確認します。
+
 ## Documents
 
 - [Flutterスマホゲーム企画書: プロ野球フロントライン](docs/pro-baseball-sim-game-proposal.md)
