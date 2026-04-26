@@ -42,6 +42,16 @@ Gitを入れられないWindows環境では、GitHubのブランチ画面からZ
 
 Flutterも入れられない場合は、Cloud側でWebビルドまたは一時プレビューを用意して確認します。
 
+### No-install browser preview
+
+GitやFlutterを入れられない環境でも、簡易版はブラウザだけで確認できます。
+
+1. GitHubのブランチ画面から `Code` -> `Download ZIP` を選ぶ
+2. ZIPを解凍する
+3. `preview/index.html` をダブルクリックする
+
+この簡易版はFlutter実装そのものではなく、画面体験を確認するためのHTMLプロトタイプです。
+
 ## Documents
 
 - [Flutterスマホゲーム企画書: プロ野球フロントライン](docs/pro-baseball-sim-game-proposal.md)

@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>プロ野球フロントライン 簡易ブラウザ検証版</title>
+    <style>
+      :root {
+        --dragons-blue: #003b7a;
+        --dragons-light: #e8f1ff;
+        --ink: #172033;
+        --muted: #5b6475;
+        --card: #ffffff;
+        --line: #d9e1ef;
+        --win: #0b7a3b;
+        --loss: #b3261e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #f4f8ff 0%, #eef3f9 100%);
+        color: var(--ink);
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      main {
+        width: min(980px, 100%);
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      header {
+        margin-bottom: 16px;
+        padding: 24px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--dragons-blue), #2f78c8);
+        color: white;
+        box-shadow: 0 20px 50px rgba(0, 59, 122, 0.22);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      .eyebrow {
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        opacity: 0.88;
+      }
+
+      .headline {
+        margin-bottom: 8px;
+        font-size: clamp(28px, 5vw, 44px);
+        line-height: 1.1;
+      }
+
+      .score-line {
+        margin-bottom: 12px;
+        font-size: 24px;
+        font-weight: 800;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 16px;
+      }
+
+      .card {
+        grid-column: span 12;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        background: var(--card);
+        box-shadow: 0 10px 30px rgba(23, 32, 51, 0.07);
+      }
+
+      @media (min-width: 820px) {
+        .span-5 {
+          grid-column: span 5;
+        }
+
+        .span-7 {
+          grid-column: span 7;
+        }
+      }
+
+      .focus-list,
+      .report-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        min-height: 32px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: var(--dragons-light);
+        color: var(--dragons-blue);
+        font-weight: 700;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      select,
+      button {
+        width: 100%;
+        min-height: 46px;
+        border-radius: 14px;
+        font: inherit;
+      }
+
+      select {
+        margin-bottom: 14px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        background: white;
+      }
+
+      button {
+        border: 0;
+        background: var(--dragons-blue);
+        color: white;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      button:hover {
+        filter: brightness(1.08);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 14px;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--line);
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      th:first-child,
+      td:first-child {
+        text-align: left;
+        font-weight: 800;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      .result-badge {
+        display: inline-flex;
+        margin-bottom: 12px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        color: white;
+        font-weight: 800;
+      }
+
+      .result-badge.win {
+        background: var(--win);
+      }
+
+      .result-badge.loss {
+        background: var(--loss);
+      }
+
+      .notice {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">NO INSTALL PREVIEW</div>
+        <h1 class="headline">プロ野球フロントライン<br />簡易ブラウザ検証版</h1>
+        <div id="scoreLine" class="score-line">名古屋D 0 - 0 東京R</div>
+        <p>中日ドラゴンズ風チームを題材に、打撃方針と継投方針を選んで1試合をシミュレーションします。</p>
+      </header>
+
+      <section class="grid">
+        <div class="card span-5">
+          <h2>今日の采配方針</h2>
+          <label for="batting">攻撃方針</label>
+          <select id="batting">
+            <option value="balanced">バランス重視</option>
+            <option value="smallBall">つなぐ野球</option>
+            <option value="power">長打狙い</option>
+          </select>
+
+          <label for="bullpen">継投方針</label>
+          <select id="bullpen">
+            <option value="normal">通常運用</option>
+            <option value="quickHook">早めの継投</option>
+            <option value="preserveArms">リリーフ温存</option>
+          </select>
+
+          <button id="simulate">1試合をシミュレーション</button>
+        </div>
+
+        <div class="card span-7">
+          <h2>中日ドラゴンズ重点プロトタイプ</h2>
+          <p class="notice">バンテリンドーム想定 / チーム課題</p>
+          <ul class="focus-list">
+            <li><span class="chip">投手力を活かす</span></li>
+            <li><span class="chip">守備で失点を減らす</span></li>
+            <li><span class="chip">得点力改善</span></li>
+            <li><span class="chip">若手起用</span></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h2>スコアボード</h2>
+          <div class="table-wrap">
+            <table id="scoreboard" aria-label="スコアボード"></table>
+          </div>
+        </div>
+
+        <div class="card span-7">
+          <span id="resultBadge" class="result-badge loss">未試合</span>
+          <h2>試合後レポート</h2>
+          <ul id="report" class="report-list"></ul>
+        </div>
+
+        <div class="card span-5">
+          <h2>次戦への提案</h2>
+          <ul id="recommendations" class="report-list"></ul>
+        </div>
+
+        <div class="card">
+          <h2>権利確認メモ</h2>
+          <p class="notice">
+            この簡易検証版は、企画体験を確認するための依存なしプレビューです。
+            実在球団名、選手名、ロゴ、写真、ユニフォーム、詳細成績データを外部公開・商用利用する場合は、
+            権利確認とライセンス取得が必要です。
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const team = {
+        shortName: "名古屋D",
+        batting: 67,
+        power: 61,
+        pitching: 78,
+        bullpen: 74,
+        defense: 80,
+      };
+
+      const opponent = {
+        shortName: "東京R",
+        batting: 70,
+        power: 68,
+        pitching: 69,
+        bullpen: 67,
+        defense: 70,
+      };
+
+      const battingLabels = {
+        balanced: "打線はバランス型。出塁と長打の両方を狙いました。",
+        smallBall: "打線は小技重視。バンテリンドームで1点を取りに行く設計です。",
+        power: "打線は長打狙い。得点力不足を一発で補う狙いです。",
+      };
+
+      const bullpenLabels = {
+        normal: "継投は通常運用。先発と勝ちパターンの消耗を抑えます。",
+        quickHook: "継投は早め。終盤の1点勝負に寄せました。",
+        preserveArms: "継投は温存。連戦を意識しますが、終盤失点リスクは残ります。",
+      };
+
+      function chance(probability) {
+        return Math.random() < probability ? 1 : 0;
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function simulateHalfInning({ offense, defense, battingPlan, inning, userSide }) {
+        let runs = 0;
+        let expected =
+          0.36 +
+          (offense.batting - defense.pitching) / 220 +
+          (offense.power - defense.defense) / 360;
+
+        if (userSide && battingPlan === "smallBall") expected += inning >= 7 ? 0.05 : -0.01;
+        if (userSide && battingPlan === "power") expected += 0.04;
+        expected = clamp(expected - 0.04, 0.16, 0.74);
+
+        if (Math.random() < expected) runs += 1;
+        if (Math.random() < expected * 0.22) runs += 1;
+        if (battingPlan === "power" && Math.random() < 0.05) runs += 1;
+        return Math.min(runs, 5);
+      }
+
+      function simulateGame() {
+        const battingPlan = document.getElementById("batting").value;
+        const bullpenPlan = document.getElementById("bullpen").value;
+        const innings = [];
+        let homeRuns = 0;
+        let awayRuns = 0;
+        const keyMoments = [];
+
+        for (let inning = 1; inning <= 9; inning++) {
+          let away = simulateHalfInning({
+            offense: opponent,
+            defense: team,
+            battingPlan: "balanced",
+            inning,
+            userSide: false,
+          });
+          let home = simulateHalfInning({
+            offense: team,
+            defense: opponent,
+            battingPlan,
+            inning,
+            userSide: true,
+          });
+
+          if (inning >= 7 && bullpenPlan === "quickHook") {
+            away = Math.max(0, away - chance(0.35));
+            keyMoments.push(`${inning}回、早めの継投で終盤の失点期待値を下げました。`);
+          }
+          if (inning >= 7 && bullpenPlan === "preserveArms") {
+            away += chance(0.28);
+            keyMoments.push(`${inning}回、リリーフ温存により終盤の失点リスクが残りました。`);
+          }
+          if (inning >= 6 && home > 0) {
+            keyMoments.push(`${inning}回、打撃方針が得点に結びつきました。`);
+          }
+
+          innings.push({ away, home });
+          awayRuns += away;
+          homeRuns += home;
+        }
+
+        if (homeRuns === awayRuns) {
+          if (Math.random() < (bullpenPlan === "quickHook" ? 0.58 : 0.48)) {
+            homeRuns += 1;
+            keyMoments.push("延長10回、継投判断がサヨナラ機を呼び込みました。");
+          } else {
+            awayRuns += 1;
+            keyMoments.push("延長10回、リリーフ負荷が出て勝ち越しを許しました。");
+          }
+        }
+
+        render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments });
+      }
+
+      function render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments }) {
+        document.getElementById("scoreLine").textContent =
+          `${opponent.shortName} ${awayRuns} - ${homeRuns} ${team.shortName}`;
+
+        const won = homeRuns > awayRuns;
+        const badge = document.getElementById("resultBadge");
+        badge.textContent = won ? "采配成功" : "課題が残る敗戦";
+        badge.className = `result-badge ${won ? "win" : "loss"}`;
+
+        const headerCells = ["Team", ...innings.map((_, index) => `${index + 1}`), "R"];
+        const row = (name, key, total) =>
+          `<tr><td>${name}</td>${innings.map((inning) => `<td>${inning[key]}</td>`).join("")}<td><strong>${total}</strong></td></tr>`;
+        document.getElementById("scoreboard").innerHTML =
+          `<thead><tr>${headerCells.map((cell) => `<th>${cell}</th>`).join("")}</tr></thead>` +
+          `<tbody>${row(opponent.shortName, "away", awayRuns)}${row(team.shortName, "home", homeRuns)}</tbody>`;
+
+        const gameShape = Math.abs(homeRuns - awayRuns) <= 1 ? "接戦" : "点差のある展開";
+        const report = [
+          `${team.shortName}は${opponent.shortName}に${homeRuns}-${awayRuns}で${won ? "勝利" : "敗戦"}。${gameShape}でした。`,
+          battingLabels[battingPlan],
+          bullpenLabels[bullpenPlan],
+          "バンテリンドーム想定のため、長打よりも守備、走塁、継投判断が勝敗に出やすい設計です。",
+          ...(keyMoments.length ? keyMoments.slice(0, 3) : ["大きな勝負所は少なく、淡々としたロースコア展開でした。"]),
+        ];
+        document.getElementById("report").innerHTML = report.map((item) => `<li>・${item}</li>`).join("");
+
+        const recommendations = won
+          ? ["次戦も同じ方針で入り、疲労が高いリリーフだけ入れ替える。", "若手の途中出場枠を1つ増やし、勝ちながら育成する。"]
+          : [
+              battingPlan === "power"
+                ? "長打狙いで得点が伸びなければ、次戦はつなぐ野球も試す。"
+                : "得点期待値が低いため、上位打線に出塁型を固める。",
+              bullpenPlan === "preserveArms"
+                ? "温存采配で終盤失点が増えたため、接戦では早めの継投へ寄せる。"
+                : "勝ちパターンの連投を避けるため、新しい中継ぎ候補を試す。",
+            ];
+        document.getElementById("recommendations").innerHTML = recommendations
+          .map((item) => `<li>・${item}</li>`)
+          .join("");
+      }
+
+      document.getElementById("simulate").addEventListener("click", simulateGame);
+      simulateGame();
+    </script>
+  </body>
+</html>
