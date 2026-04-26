@@ -483,6 +483,38 @@
               <option value="preserveArms">リリーフ温存</option>
             </select>
           </label>
+          <label>
+            打順構成
+            <select id="lineup">
+              <option value="onBaseTop">出塁型を上位固定</option>
+              <option value="powerCore">長打型を中軸集中</option>
+              <option value="youthStart">若手をスタメン起用</option>
+            </select>
+          </label>
+          <label>
+            走塁・小技
+            <select id="running">
+              <option value="stationToStation">無理せず進塁</option>
+              <option value="stealAndRun">盗塁・エンドラン</option>
+              <option value="buntPressure">バント・進塁打徹底</option>
+            </select>
+          </label>
+          <label>
+            守備シフト
+            <select id="defense">
+              <option value="standard">標準守備</option>
+              <option value="noDoubles">長打警戒シフト</option>
+              <option value="infieldIn">内野前進・1点阻止</option>
+            </select>
+          </label>
+          <label>
+            勝負所采配
+            <select id="clutch">
+              <option value="trustStarter">先発を信頼</option>
+              <option value="pinchHitEarly">代打を早めに投入</option>
+              <option value="closerForFourOuts">抑え回跨ぎも許可</option>
+            </select>
+          </label>
           <div class="button-row">
             <button id="simulate">次の試合へ</button>
             <button id="reset" class="secondary">リセット</button>
@@ -593,6 +625,29 @@
         preserveArms: "継投は温存。連戦を意識しますが、終盤失点リスクは残ります。",
       };
 
+      const strategyLabels = {
+        lineup: {
+          onBaseTop: "打順: 出塁型を上位固定。初回と終盤の好機を増やします。",
+          powerCore: "打順: 長打型を中軸集中。3点以上を狙う攻撃型です。",
+          youthStart: "打順: 若手スタメン。育成ポイント重視の布陣です。",
+        },
+        running: {
+          stationToStation: "走塁: 無理せず進塁。アウトを避けて安定します。",
+          stealAndRun: "走塁: 盗塁・エンドラン。成功時は得点期待値が上がります。",
+          buntPressure: "走塁: バント・進塁打。接戦の1点を取りに行きます。",
+        },
+        defense: {
+          standard: "守備: 標準守備。大崩れを避けます。",
+          noDoubles: "守備: 長打警戒。外野を深くして長打を減らします。",
+          infieldIn: "守備: 内野前進。終盤の1点阻止に賭けます。",
+        },
+        clutch: {
+          trustStarter: "勝負所: 先発を信頼。中継ぎ疲労を抑えます。",
+          pinchHitEarly: "勝負所: 代打を早めに投入。得点機で勝負します。",
+          closerForFourOuts: "勝負所: 抑え回跨ぎ。接戦勝率と引き換えに疲労増です。",
+        },
+      };
+
       function chance(probability) {
         return Math.random() < probability ? 1 : 0;
       }
@@ -608,6 +663,10 @@
       function decisionSupport() {
         const battingPlan = document.getElementById("batting").value;
         const bullpenPlan = document.getElementById("bullpen").value;
+        const lineupPlan = document.getElementById("lineup").value;
+        const runningPlan = document.getElementById("running").value;
+        const defensePlan = document.getElementById("defense").value;
+        const clutchPlan = document.getElementById("clutch").value;
         const recommendation =
           state.bullpenFatigue >= 45
             ? "おすすめ: リリーフ温存 + つなぐ野球"
@@ -635,6 +694,10 @@
           `今日の目標: ${state.currentMission?.label ?? "ミッション準備中"}`,
           selectedBatting,
           selectedBullpen,
+          strategyLabels.lineup[lineupPlan],
+          strategyLabels.running[runningPlan],
+          strategyLabels.defense[defensePlan],
+          strategyLabels.clutch[clutchPlan],
         ];
       }
 
@@ -663,6 +726,10 @@
 
         const battingPlan = document.getElementById("batting").value;
         const bullpenPlan = document.getElementById("bullpen").value;
+        const lineupPlan = document.getElementById("lineup").value;
+        const runningPlan = document.getElementById("running").value;
+        const defensePlan = document.getElementById("defense").value;
+        const clutchPlan = document.getElementById("clutch").value;
         const innings = [];
         let homeRuns = 0;
         let awayRuns = 0;
@@ -684,6 +751,16 @@
             userSide: true,
           });
 
+          if (lineupPlan === "powerCore" && battingPlan === "power" && inning <= 5) {
+            home += chance(0.18);
+          }
+          if (lineupPlan === "onBaseTop" && runningPlan !== "stationToStation" && inning <= 3) {
+            home += chance(0.12);
+          }
+          if (runningPlan === "buntPressure" && inning >= 7) {
+            home += chance(0.16);
+          }
+
           if (inning >= 7 && bullpenPlan === "quickHook") {
             away = Math.max(0, away - chance(0.35));
             keyMoments.push(`${inning}回、早めの継投で終盤の失点期待値を下げました。`);
@@ -691,6 +768,12 @@
           if (inning >= 7 && bullpenPlan === "preserveArms") {
             away += chance(0.28 + state.bullpenFatigue / 250);
             keyMoments.push(`${inning}回、リリーフ温存により終盤の失点リスクが残りました。`);
+          }
+          if (defensePlan === "noDoubles" && inning >= 6) {
+            away = Math.max(0, away - chance(0.16));
+          }
+          if (defensePlan === "infieldIn" && inning >= 8) {
+            away += chance(0.10);
           }
           if (inning >= 6 && home > 0) {
             keyMoments.push(`${inning}回、打撃方針が得点に結びつきました。`);
@@ -702,7 +785,11 @@
         }
 
         if (homeRuns === awayRuns) {
-          if (Math.random() < (bullpenPlan === "quickHook" ? 0.58 : 0.48)) {
+          let clutchBonus = 0;
+          if (clutchPlan === "pinchHitEarly") clutchBonus += 0.06;
+          if (clutchPlan === "closerForFourOuts") clutchBonus += 0.08;
+          if (clutchPlan === "trustStarter" && state.bullpenFatigue < 30) clutchBonus += 0.03;
+          if (Math.random() < (bullpenPlan === "quickHook" ? 0.58 : 0.48) + clutchBonus) {
             homeRuns += 1;
             keyMoments.push("延長10回、継投判断がサヨナラ機を呼び込みました。");
           } else {
@@ -713,14 +800,36 @@
 
         const won = homeRuns > awayRuns;
         const missionCleared = state.currentMission.check({ won, homeRuns, awayRuns, battingPlan, bullpenPlan });
-        const rewards = applyProgress({ won, homeRuns, awayRuns, battingPlan, bullpenPlan, missionCleared });
+        const rewards = applyProgress({
+          won,
+          homeRuns,
+          awayRuns,
+          battingPlan,
+          bullpenPlan,
+          lineupPlan,
+          runningPlan,
+          defensePlan,
+          clutchPlan,
+          missionCleared,
+        });
         state.game += 1;
         if (state.game < 10) pickMission();
 
         render({ innings, homeRuns, awayRuns, battingPlan, bullpenPlan, keyMoments, rewards, missionCleared });
       }
 
-      function applyProgress({ won, homeRuns, awayRuns, battingPlan, bullpenPlan, missionCleared }) {
+      function applyProgress({
+        won,
+        homeRuns,
+        awayRuns,
+        battingPlan,
+        bullpenPlan,
+        lineupPlan,
+        runningPlan,
+        defensePlan,
+        clutchPlan,
+        missionCleared,
+      }) {
         const rewards = [];
         if (won) {
           state.wins += 1;
@@ -743,6 +852,38 @@
         if (battingPlan === "power" && homeRuns >= 3) {
           state.fanSupport += 2;
           rewards.push("得点力アピール: ファン支持率 +2");
+        }
+        if (lineupPlan === "youthStart") {
+          state.trainingPoints += 3;
+          rewards.push("若手スタメン: 育成ポイント +3");
+        }
+        if (lineupPlan === "powerCore" && homeRuns >= 3) {
+          state.fanSupport += 2;
+          rewards.push("中軸集中成功: ファン支持率 +2");
+        }
+        if (runningPlan === "stealAndRun" && homeRuns >= 2) {
+          state.fanSupport += 1;
+          rewards.push("機動力成功: ファン支持率 +1");
+        }
+        if (runningPlan === "buntPressure" && Math.abs(homeRuns - awayRuns) <= 1) {
+          state.ownerTrust += 1;
+          rewards.push("小技采配評価: オーナー評価 +1");
+        }
+        if (defensePlan === "noDoubles" && awayRuns <= 2) {
+          state.ownerTrust += 2;
+          rewards.push("長打警戒成功: オーナー評価 +2");
+        }
+        if (defensePlan === "infieldIn" && awayRuns >= 4) {
+          state.ownerTrust -= 2;
+          rewards.push("前進守備失敗: オーナー評価 -2");
+        }
+        if (clutchPlan === "pinchHitEarly" && homeRuns >= 3) {
+          state.fanSupport += 2;
+          rewards.push("代打勝負成功: ファン支持率 +2");
+        }
+        if (clutchPlan === "closerForFourOuts") {
+          state.bullpenFatigue += 5;
+          rewards.push("抑え回跨ぎ: リリーフ疲労 +5");
         }
 
         if (bullpenPlan === "quickHook") {

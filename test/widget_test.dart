@@ -38,6 +38,10 @@ void main() {
     expect(find.textContaining('おすすめ:'), findsWidgets);
     expect(find.textContaining('相手先発:'), findsWidgets);
     expect(find.text('8bitハイライトリプレイ'), findsOneWidget);
+    expect(find.textContaining('打順:'), findsWidgets);
+    expect(find.textContaining('走塁:'), findsWidgets);
+    expect(find.textContaining('守備:'), findsWidgets);
+    expect(find.textContaining('勝負所:'), findsWidgets);
 
     expect(find.text('ミッション: 3点以上取って得点力不足を払拭'), findsOneWidget);
     expect(find.text('前回の報酬/結果'), findsOneWidget);
