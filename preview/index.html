@@ -285,6 +285,15 @@
         </div>
 
         <div class="card span-7">
+          <h2>試合前分析</h2>
+          <p><strong id="recommendedPlan">おすすめ: 通常運用 + バランス重視</strong></p>
+          <h3>判断材料</h3>
+          <ul id="decisionFactors" class="report-list"></ul>
+          <h3>選択中の方針効果</h3>
+          <ul id="selectedEffects" class="report-list"></ul>
+        </div>
+
+        <div class="card span-7">
           <h2>今日の采配方針</h2>
           <label>
             攻撃方針
@@ -402,6 +411,39 @@
 
       function pickMission() {
         state.currentMission = missions[state.game % missions.length];
+      }
+
+      function decisionSupport() {
+        const battingPlan = document.getElementById("batting").value;
+        const bullpenPlan = document.getElementById("bullpen").value;
+        const recommendation =
+          state.bullpenFatigue >= 45
+            ? "おすすめ: リリーフ温存 + つなぐ野球"
+            : state.currentMission?.id === "power"
+              ? "おすすめ: 長打狙い"
+              : state.currentMission?.id === "close"
+                ? "おすすめ: 早めの継投 + つなぐ野球"
+                : "おすすめ: 通常運用 + バランス重視";
+        const selectedBatting = {
+          balanced: "攻撃: 出塁と長打のバランス型。大崩れしにくい。",
+          smallBall: "攻撃: 接戦向き。2点前後を取りに行きやすい。",
+          power: "攻撃: 3点以上ミッション向き。成功時の支持率上昇が大きい。",
+        }[battingPlan];
+        const selectedBullpen = {
+          normal: "継投: 消耗と勝率の中間。迷った時の基準方針。",
+          quickHook: "継投: 接戦勝利向き。終盤失点を抑えるが疲労が増える。",
+          preserveArms: "継投: 連戦向き。疲労は下がるが終盤失点リスクが残る。",
+        }[bullpenPlan];
+
+        return [
+          recommendation,
+          "相手先発: 左の技巧派。制球が高く、長打狙いは三振リスクも上がる。",
+          "球場: バンテリンドーム想定。長打より出塁、守備、継投の価値が高い。",
+          `自軍状態: リリーフ疲労${Math.round(state.bullpenFatigue)}%。45%以上なら温存、30%以下なら早めの継投も選びやすい。`,
+          `今日の目標: ${state.currentMission?.label ?? "ミッション準備中"}`,
+          selectedBatting,
+          selectedBullpen,
+        ];
       }
 
       function simulateHalfInning({ offense, defense, battingPlan, inning, userSide }) {
@@ -595,6 +637,9 @@
         document.getElementById("missions").innerHTML = state.currentMission
           ? `<li>・${state.currentMission.label}</li><li>・達成報酬: ${state.currentMission.reward}</li>`
           : "<li>・ミッション準備中</li>";
+        document.getElementById("decisionSupport").innerHTML = decisionSupport()
+          .map((item) => `<li>・${item}</li>`)
+          .join("");
       }
 
       function resetSeason() {
@@ -617,6 +662,8 @@
 
       document.getElementById("simulate").addEventListener("click", simulateGame);
       document.getElementById("reset").addEventListener("click", resetSeason);
+      document.getElementById("batting").addEventListener("change", updateSeasonMetrics);
+      document.getElementById("bullpen").addEventListener("change", updateSeasonMetrics);
       resetSeason();
     </script>
   </body>

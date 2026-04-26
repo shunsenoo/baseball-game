@@ -78,6 +78,47 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
 
   bool get _seasonFinished => _game >= _seasonLength;
 
+  String get _recommendedPlan {
+    if (_bullpenFatigue >= 45) {
+      return 'おすすめ: リリーフ温存 + つなぐ野球';
+    }
+    if (_mission.contains('3点以上')) {
+      return 'おすすめ: 得点力テコ入れ + 長打狙い';
+    }
+    if (_mission.contains('接戦')) {
+      return 'おすすめ: 早めの継投 + つなぐ野球';
+    }
+    return 'おすすめ: 通常運用 + バランス重視';
+  }
+
+  List<String> get _decisionFactors {
+    return [
+      '相手先発: 左の技巧派。制球が高く、長打狙いは三振リスクも上がる。',
+      '球場: バンテリンドーム想定。長打より出塁、守備、継投の価値が高い。',
+      '自軍状態: リリーフ疲労$_bullpenFatigue%。45%以上なら温存、30%以下なら早めの継投も選びやすい。',
+      '今日の目標: $_mission',
+    ];
+  }
+
+  List<String> get _selectedPlanEffects {
+    final batting = switch (_gamePlan.battingApproach) {
+      BattingApproach.balanced => '攻撃: 出塁と長打のバランス型。大崩れしにくいが爆発力は中程度。',
+      BattingApproach.smallBall => '攻撃: 接戦向き。2点前後を取りに行きやすいが大量点は出にくい。',
+      BattingApproach.power => '攻撃: 3点以上ミッション向き。成功時の支持率上昇が大きいが凡退も増える。',
+    };
+    final bullpen = switch (_gamePlan.bullpenApproach) {
+      BullpenApproach.normal => '継投: 消耗と勝率の中間。迷った時の基準方針。',
+      BullpenApproach.quickHook => '継投: 接戦勝利向き。終盤失点を抑える代わりにリリーフ疲労が増える。',
+      BullpenApproach.preserveArms => '継投: 連戦向き。疲労は下がるが終盤失点リスクが残る。',
+    };
+    final front = switch (_frontOfficeMove) {
+      FrontOfficeMove.restBullpen => '施策: リリーフ疲労を抑える。接戦続きの時に有効。',
+      FrontOfficeMove.trainProspect => '施策: 育成ポイント重視。勝てばファン支持も伸びる。',
+      FrontOfficeMove.boostLineup => '施策: 得点力ミッション向き。3点未満だと評価が下がりやすい。',
+    };
+    return [batting, bullpen, front];
+  }
+
   void _updateBattingApproach(BattingApproach? approach) {
     if (approach == null) {
       return;
@@ -223,6 +264,12 @@ class _PrototypeHomePageState extends State<PrototypeHomePage> {
           ),
           const SizedBox(height: 16),
           _MissionCard(mission: _mission, rewards: _lastRewards),
+          const SizedBox(height: 16),
+          _DecisionSupportCard(
+            recommendedPlan: _recommendedPlan,
+            factors: _decisionFactors,
+            selectedPlanEffects: _selectedPlanEffects,
+          ),
           const SizedBox(height: 16),
           _PlanCard(
             gamePlan: _gamePlan,
@@ -421,6 +468,51 @@ class _MissionCard extends StatelessWidget {
             Text('前回の報酬/結果', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             for (final reward in rewards) _BulletText(reward),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DecisionSupportCard extends StatelessWidget {
+  const _DecisionSupportCard({
+    required this.recommendedPlan,
+    required this.factors,
+    required this.selectedPlanEffects,
+  });
+
+  final String recommendedPlan;
+  final List<String> factors;
+  final List<String> selectedPlanEffects;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('試合前分析', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              recommendedPlan,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('判断材料', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final factor in factors) _BulletText(factor),
+            const Divider(height: 28),
+            Text('選択中の方針による予測効果', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            for (final effect in selectedPlanEffects) _BulletText(effect),
           ],
         ),
       ),

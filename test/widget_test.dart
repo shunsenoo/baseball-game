@@ -33,6 +33,10 @@ void main() {
     expect(find.textContaining('10試合チャレンジ'), findsWidgets);
     await tester.ensureVisible(find.text('球団状態'));
     expect(find.text('球団状態'), findsOneWidget);
+    await tester.ensureVisible(find.text('試合前分析'));
+    expect(find.text('試合前分析'), findsOneWidget);
+    expect(find.textContaining('おすすめ:'), findsWidgets);
+    expect(find.textContaining('相手先発:'), findsWidgets);
 
     final simulateButton = find.widgetWithText(FilledButton, '次の試合へ進む');
     expect(simulateButton, findsOneWidget);
