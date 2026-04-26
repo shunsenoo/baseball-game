@@ -278,6 +278,30 @@
         background-size: 18px 18px;
       }
 
+      .pixel-field::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 56px;
+        background:
+          repeating-linear-gradient(90deg, #0d1b2a 0 12px, #18324b 12px 24px),
+          #0d1b2a;
+        border-bottom: 4px solid var(--pixel-shadow);
+      }
+
+      .pixel-field::after {
+        content: "NAGOYA DOME  HIGHLIGHT";
+        position: absolute;
+        left: 14px;
+        top: 12px;
+        padding: 6px 10px;
+        border: 3px solid #f7d28a;
+        background: #111827;
+        color: #f7d28a;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+      }
+
       .diamond {
         position: absolute;
         left: 50%;
@@ -327,6 +351,7 @@
         background: white;
         border: 2px solid #c21f30;
         animation: pitch-hit 2.4s steps(8, end) infinite;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
       }
 
       .bat {
@@ -350,11 +375,49 @@
         font-weight: 800;
       }
 
+      .impact {
+        position: absolute;
+        left: calc(50% + 36px);
+        top: calc(54% + 88px);
+        color: #ffd447;
+        font-size: 42px;
+        font-weight: 900;
+        text-shadow: 4px 4px 0 var(--pixel-shadow);
+        animation: pop-impact 1.5s steps(3, end) infinite;
+      }
+
       @keyframes pitch-hit {
         0% { left: calc(50% - 4px); top: calc(54% + 34px); }
         35% { left: calc(50% + 28px); top: calc(54% + 92px); }
         55% { left: calc(50% + 70px); top: calc(54% - 34px); }
         100% { left: calc(50% + 130px); top: calc(54% - 92px); }
+      }
+
+      @keyframes ball-hit {
+        0% { left: calc(50% - 4px); top: calc(54% + 34px); }
+        30% { left: calc(50% + 28px); top: calc(54% + 92px); }
+        50% { left: calc(50% + 82px); top: calc(54% - 18px); }
+        100% { left: calc(50% + 178px); top: calc(54% - 124px); }
+      }
+
+      @keyframes ball-grounder {
+        0% { left: calc(50% - 4px); top: calc(54% + 34px); }
+        35% { left: calc(50% + 28px); top: calc(54% + 92px); }
+        70% { left: calc(50% - 64px); top: calc(54% + 18px); }
+        100% { left: calc(50% - 118px); top: calc(54% + 6px); }
+      }
+
+      @keyframes runner-advance {
+        0% { left: calc(50% + 18px); top: calc(54% + 94px); }
+        35% { left: calc(50% + 82px); top: calc(54% + 4px); }
+        70% { left: calc(50% - 8px); top: calc(54% - 84px); }
+        100% { left: calc(50% - 98px); top: calc(54% + 4px); }
+      }
+
+      @keyframes pop-impact {
+        0%, 28% { opacity: 0; transform: scale(0.6); }
+        35%, 70% { opacity: 1; transform: scale(1.1); }
+        100% { opacity: 0; transform: scale(0.8); }
       }
 
       @keyframes swing {
@@ -427,17 +490,26 @@
         </div>
 
         <div class="card span-7">
-          <h2>ドット絵 試合リプレイ / スコアボード</h2>
+          <h2>ドット絵ハイライト / スコアボード</h2>
           <div class="pixel-field" aria-label="試合リプレイ">
-            <div class="mound"></div>
-            <div class="base b1"></div>
-            <div class="base b2"></div>
-            <div class="base b3"></div>
+            <div class="crowd-row row-a"></div>
+            <div class="crowd-row row-b"></div>
+            <div id="replayBoard" class="score-board">PIXEL HIGHLIGHT</div>
+            <div class="diamond"></div>
+            <div class="base home"></div>
+            <div class="base first"></div>
+            <div class="base second"></div>
+            <div class="base third"></div>
+            <div class="foul-line left"></div>
+            <div class="foul-line right"></div>
             <div class="player pitcher"></div>
             <div class="player batter"></div>
-            <div class="player runner"></div>
-            <div class="ball"></div>
-            <div id="replayText" class="replay-text">PLAY BALL</div>
+            <div id="pixelRunner" class="player runner"></div>
+            <div class="fielder left-field"></div>
+            <div class="fielder right-field"></div>
+            <div class="bat"></div>
+            <div id="pixelBall" class="ball"></div>
+            <div id="replayText" class="replay-text">NEXT HIGHLIGHT</div>
           </div>
           <div class="table-wrap">
             <table id="scoreboard" aria-label="スコアボード"></table>
