@@ -23,6 +23,8 @@ void main() {
     expect(result.events.length, greaterThan(54));
     expect(result.scoreLine, contains('名古屋D'));
     expect(result.highlights, isNotEmpty);
+    expect(result.decisionCards, isNotEmpty);
+    expect(result.decisionCards.first.recommendedCall, isNotEmpty);
     expect(
       result.events.every(
         (event) => event.outsBefore >= 0 && event.outsBefore <= 2,

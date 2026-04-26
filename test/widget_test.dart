@@ -42,9 +42,15 @@ void main() {
     expect(find.textContaining('走塁:'), findsWidgets);
     expect(find.textContaining('守備:'), findsWidgets);
     expect(find.textContaining('勝負所:'), findsWidgets);
-
     expect(find.text('ミッション: 3点以上取って得点力不足を払拭'), findsOneWidget);
     expect(find.text('前回の報酬/結果'), findsOneWidget);
     expect(find.textContaining('育成ポイント'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.text('本番エンジン分析'),
+      300,
+      scrollable: find.byType(Scrollable),
+    );
+    expect(find.text('本番エンジン分析'), findsOneWidget);
+    expect(find.textContaining('打席単位の裏シミュレーション'), findsWidgets);
   });
 }
