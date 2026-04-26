@@ -716,6 +716,14 @@ class _ProductionEngineCard extends StatelessWidget {
             ),
             if (result != null) ...[
               const Divider(height: 28),
+              Text('勝負所采配カード', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              for (final decision in result!.decisionCards.take(3))
+                _BulletText(
+                  '${decision.situation}: ${decision.recommendedCall} / '
+                  '代替: ${decision.alternativeCall} / リスク: ${decision.risk}',
+                ),
+              const Divider(height: 28),
               Text('高レバレッジ場面', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               if (leverageEvents.isEmpty)

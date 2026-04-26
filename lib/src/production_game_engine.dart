@@ -196,6 +196,22 @@ class ProductionGameEvent {
       inning >= 7 || basesBefore.hasRunnerInScoringPosition || runsScored > 0;
 }
 
+class ManagerDecisionCard {
+  const ManagerDecisionCard({
+    required this.situation,
+    required this.recommendedCall,
+    required this.alternativeCall,
+    required this.risk,
+    required this.reason,
+  });
+
+  final String situation;
+  final String recommendedCall;
+  final String alternativeCall;
+  final String risk;
+  final String reason;
+}
+
 class ProductionGameResult {
   const ProductionGameResult({
     required this.homeTeam,
@@ -205,6 +221,7 @@ class ProductionGameResult {
     required this.innings,
     required this.events,
     required this.highlights,
+    required this.decisionCards,
     required this.recommendations,
   });
 
@@ -215,6 +232,7 @@ class ProductionGameResult {
   final List<InningScore> innings;
   final List<ProductionGameEvent> events;
   final List<String> highlights;
+  final List<ManagerDecisionCard> decisionCards;
   final List<String> recommendations;
 
   bool get homeWon => homeRuns > awayRuns;
@@ -323,11 +341,57 @@ class ProductionGameEngine {
       innings: innings,
       events: events,
       highlights: highlights.take(8).toList(),
+      decisionCards: _buildDecisionCards(events, plan).take(4).toList(),
       recommendations: _buildProductionRecommendations(
         plan,
         homeRuns > awayRuns,
       ),
     );
+  }
+
+  List<ManagerDecisionCard> _buildDecisionCards(
+    List<ProductionGameEvent> events,
+    ProductionGamePlan plan,
+  ) {
+    final leverageEvents = events.where((event) => event.isLeverage).toList();
+    final source = leverageEvents.isNotEmpty ? leverageEvents : events.take(3);
+    return source.map((event) {
+      final isOffense = event.isBottom;
+      final situation =
+          '${event.inning}回${event.isBottom ? '裏' : '表'} ${event.outsBefore}死 ${event.basesBefore.label}';
+      if (isOffense && event.basesBefore.hasRunnerInScoringPosition) {
+        return ManagerDecisionCard(
+          situation: situation,
+          recommendedCall: plan.clutchIntent == ClutchIntent.pinchHit
+              ? '代打勝負を継続'
+              : '代打または小技で1点を取りに行く',
+          alternativeCall: '主力を温存して通常打撃',
+          risk: 'ベンチ消費と併殺リスク',
+          reason: '得点圏の攻撃は勝率への影響が大きいため。',
+        );
+      }
+      if (!isOffense && event.inning >= 7) {
+        return ManagerDecisionCard(
+          situation: situation,
+          recommendedCall:
+              plan.defensiveAlignment == DefensiveAlignment.noDoubles
+              ? '長打警戒を維持'
+              : '外野を深めて長打を消す',
+          alternativeCall: '内野前進で1点阻止',
+          risk: '単打を許して走者が残る',
+          reason: '終盤は長打で一気に試合が壊れるため。',
+        );
+      }
+      return ManagerDecisionCard(
+        situation: situation,
+        recommendedCall: plan.runningIntent == RunningIntent.aggressive
+            ? '機動力で圧をかける'
+            : 'アウトを増やさず次打者へつなぐ',
+        alternativeCall: '長打狙いに切り替える',
+        risk: '盗塁失敗または得点期待値の停滞',
+        reason: '走者状況とアウトカウントで期待得点が変わるため。',
+      );
+    }).toList();
   }
 
   int _lineupStartIndex(LineupIntent lineupIntent) => switch (lineupIntent) {
